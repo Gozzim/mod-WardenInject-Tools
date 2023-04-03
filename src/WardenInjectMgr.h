@@ -15,13 +15,27 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-// From SC
-void AddWardenInjectScripts();
-void AddSC_wardeninject_commandscript();
+#ifndef _WardenInjectMgr_H_
+#define _WardenInjectMgr_H_
 
-// Add All
-void Addmod_WardenInject_ToolsScripts()
+#include "Common.h"
+#include "Chat.h"
+#include "Player.h"
+#include "SocialMgr.h"
+
+class WardenInjectMgr
 {
-    AddWardenInjectScripts();
-    AddSC_wardeninject_commandscript();
-}
+public:
+    static WardenInjectMgr* instance();
+
+    std::vector<std::string> GetChunks(std::string s, uint8_t chunkSize);
+    bool TryReadFile(std::string& path, std::string& bn_Result);
+    void SendWardenInject(Player* player, std::string payload);
+
+private:
+
+};
+
+#define sWardenInjectMgr WardenInjectMgr::instance()
+
+#endif

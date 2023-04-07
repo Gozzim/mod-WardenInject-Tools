@@ -15,9 +15,80 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-std::vector<std::string> WardenInjectMgr::GetChunks(std::string s, uint8_t chunkSize)
+#include "WardenInjectMgr.h"
+#include "StringFormat.h"
+
+WardenInjectMgr* WardenInjectMgr::instance()
 {
-    std::vector<std::string> chunks;
+    static WardenInjectMgr instance;
+    return &instance;
+}
+
+// Loads the contents of a Lua file into a string variable
+std::string WardenInjectMgr::LoadLuaFile(const std::string& filePath)
+{
+    std::ifstream file(filePath);
+    if (file.fail())
+    {
+        LOG_ERROR("module", "WardenInjectMgr::LoadLuaFile - Loading file {} failed.", filePath);
+        return nullptr;
+    }
+
+    std::string luaCode;
+    char buffer[1024];
+
+    while (file.read(buffer, sizeof(buffer)))
+    {
+        luaCode.append(buffer, sizeof(buffer));
+    }
+    luaCode.append(buffer, file.gcount());
+    file.close();
+
+    if (luaCode.empty())
+    {
+        LOG_WARN("module", "WardenInjectMgr::LoadLuaFile - File {} is empty.", filePath);
+        return nullptr;
+    }
+
+    return luaCode;
+}
+
+// Removes leading whitespaces and replaces line breaks with spaces
+void WardenInjectMgr::ConvertToPayload(std::string& luaCode)
+{
+    // Trim whitespace from the beginning and end of the string
+    Acore::String::Trim(luaCode);
+
+    // Remove unwanted characters (all whitespace except spaces)
+    luaCode.erase(std::remove(luaCode.begin(), luaCode.end(), '\r'), luaCode.end());
+    luaCode.erase(std::remove(luaCode.begin(), luaCode.end(), '\n'), luaCode.end());
+    luaCode.erase(std::remove(luaCode.begin(), luaCode.end(), '\t'), luaCode.end());
+
+    // Remove non-printable characters
+    luaCode.erase(std::remove_if(luaCode.begin(), luaCode.end(), [](unsigned char c) { return !std::isprint(c); }), luaCode.end());
+}
+
+std::string WardenInjectMgr::GetPayloadFromFile(std::string filePath)
+{
+    std::string luaCode = LoadLuaFile(filePath);
+    if (luaCode.empty())
+    {
+        return nullptr;
+    }
+
+    ConvertToPayload(luaCode);
+    if (luaCode.empty())
+    {
+        LOG_WARN("module", "WardenInjectMgr::GetPayloadFromFile - Code from file {} is empty after removing whitespaces.", filePath);
+        return nullptr;
+    }
+
+    return luaCode;
+}
+
+std::vector <std::string> WardenInjectMgr::GetChunks(std::string s, uint8_t chunkSize)
+{
+    std::vector <std::string> chunks;
 
     for (uint32_t i = 0; i < s.size(); i += chunkSize)
     {
@@ -27,53 +98,69 @@ std::vector<std::string> WardenInjectMgr::GetChunks(std::string s, uint8_t chunk
     return chunks;
 }
 
-bool WardenInjectMgr::TryReadFile(std::string& path, std::string& bn_Result)
+WardenPayloadMgr* GetWardenPayloadMgr(WorldSession* session)
 {
-    std::ifstream bn_File(path);
+    if (!session)
+    {
+        return nullptr;
+    }
 
-    std::string bn_Buffer = "";
-    bn_Result = "";
+    WardenWin* warden = (WardenWin*)session->GetWarden();
+    if (!warden)
+    {
+        return nullptr;
+    }
 
-    if (!bn_File.is_open()) {
+    if (!warden->IsInitialized())
+    {
+        return nullptr;
+    }
+
+    return warden->GetPayloadMgr();
+}
+
+bool WardenInjectMgr::SendWardenInject(Player* player, std::string payload)
+{
+    if (payload.empty())
+    {
+        LOG_ERROR("module", "WardenInjectMgr::SendWardenInject - Payload for player {} is empty.", player->GetName());
+        return false;
+    }
+    
+    WorldSession* session = player->GetSession();
+
+    if (!session)
+    {
         return false;
     }
 
-    while (std::getline(bn_File, bn_Buffer)) {
-        bn_Result = bn_Result + (bn_Buffer);
-    }
-
-    bn_Result.erase(std::remove(bn_Result.begin(), bn_Result.end(), '\r'), bn_Result.cend());
-    bn_Result.erase(std::remove(bn_Result.begin(), bn_Result.end(), '\n'), bn_Result.cend());
-
-    return true;
-}
-
-void WardenInjectMgr::SendWardenInject(Player* player, std::string payload)
-{
-    Warden* warden = player->GetSession()->GetWarden();
+    WardenWin* warden = (WardenWin*)session->GetWarden();
+    
     if (!warden)
     {
-        return;
+        LOG_ERROR("module", "WardenInjectMgr::SendWardenInject - Warden could not be found for player {}.", player->GetName());
+        return false;
+    }
+
+    if (!warden->IsInitialized())
+    {
+        LOG_ERROR("module", "WardenInjectMgr::SendWardenInject - Warden is not initialized for player {}.", player->GetName());
+        return false;
     }
 
     auto payloadMgr = warden->GetPayloadMgr();
     if (!payloadMgr)
     {
-        return;
+        LOG_ERROR("module", "WardenInjectMgr::SendWardenInject - Payload Manager could not be found for player {}.", player->GetName());
+        return false;
     }
 
-   auto chunks = GetChunks(payload, 200);
+    for (uint32 i = 0; i < payloadMgr->GetPayloadCountInQueue(); i++)
+    {
+        warden->ForceChecks();
+    }
 
-
-    uint32 payloadId = payloadMgr->RegisterPayload(welcomePayload);
-    payloadMgr->QueuePayload(payloadId);
-}
-
-void SendChunkedPayload(Warden* warden, WardenPayloadMgr* payloadMgr, std::string payload, uint32 chunkSize)
-{
-    bool verbose = sConfigMgr->GetOption<bool>("BreakingNews.Verbose", false);
-
-    auto chunks = GetChunks(payload, chunkSize);
+    auto chunks = GetChunks(payload, 128);
 
     if (!payloadMgr->GetPayloadById(_prePayloadId))
     {
@@ -83,23 +170,15 @@ void SendChunkedPayload(Warden* warden, WardenPayloadMgr* payloadMgr, std::strin
     payloadMgr->QueuePayload(_prePayloadId);
     warden->ForceChecks();
 
-    if (verbose)
-    {
-        LOG_INFO("module", "Sent pre-payload '{}'.", _prePayload);
-    }
-
     for (auto const& chunk : chunks)
     {
         auto smallPayload = "wlbuf = wlbuf .. [[" + chunk + "]];";
-
         payloadMgr->RegisterPayload(smallPayload, _tmpPayloadId, true);
-        payloadMgr->QueuePayload(_tmpPayloadId);
+        uint32 payloadId = payloadMgr->RegisterPayload(payload);
+        payloadMgr->QueuePayload(payloadId);
         warden->ForceChecks();
 
-        if (verbose)
-        {
-            LOG_INFO("module", "Sent mid-payload '{}'.", smallPayload);
-        }
+        LOG_INFO("module", "Sent payload '{}'.", smallPayload);
     }
 
     if (!payloadMgr->GetPayloadById(_postPayloadId))
@@ -110,8 +189,5 @@ void SendChunkedPayload(Warden* warden, WardenPayloadMgr* payloadMgr, std::strin
     payloadMgr->QueuePayload(_postPayloadId);
     warden->ForceChecks();
 
-    if (verbose)
-    {
-        LOG_INFO("module", "Sent post-payload '{}'.", _postPayload);
-    }
+    return true;
 }

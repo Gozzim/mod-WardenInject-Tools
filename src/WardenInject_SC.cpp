@@ -17,10 +17,12 @@
 
 #include "ScriptMgr.h"
 #include "Player.h"
+#include "Config.h"
 #include "Chat.h"
 #include "Warden.h"
+#include "WardenInjectMgr.h"
 
-std::string welcomePayload = "message('Welcome to the server!');";
+std::string testPayload = "message('Welcome to the server!');";
 
 class WardenInjectPlayer : public PlayerScript
 {
@@ -66,34 +68,8 @@ public:
 
         RunTests(payloadMgr);
 
-        uint32 payloadId = payloadMgr->RegisterPayload(welcomePayload);
+        uint32 payloadId = payloadMgr->RegisterPayload(testPayload);
         payloadMgr->QueuePayload(payloadId);
-    }
-
-    void OnBeforeSendChatMessage(Player* player, uint32& type, uint32& lang, std::string& msg)
-    {
-        auto warden = player->GetSession()->GetWarden();
-        if (!warden)
-        {
-            return;
-        }
-
-        auto payloadMgr = warden->GetPayloadMgr();
-        if (!payloadMgr)
-        {
-            return;
-        }
-
-        std::string payload = Acore::StringFormatFmt("print('{}');", msg);
-        uint32 payloadId = payloadMgr->RegisterPayload(payload);
-
-        for (uint32 i = 0; i < payloadMgr->GetPayloadCountInQueue(); i++)
-        {
-            warden->ForceChecks();
-        }
-
-        payloadMgr->QueuePayload(payloadId);
-        warden->ForceChecks();
     }
 };
 

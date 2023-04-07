@@ -15,25 +15,39 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _WardenInjectMgr_H_
-#define _WardenInjectMgr_H_
+#ifndef _WARDENINJECTMGR_H_
+#define _WARDENINJECTMGR_H_
 
 #include "Common.h"
 #include "Chat.h"
+#include "Log.h"
 #include "Player.h"
 #include "SocialMgr.h"
+#include "WardenWin.h"
+
+#include <iostream>
+#include <fstream>
+#include <algorithm>
 
 class WardenInjectMgr
 {
 public:
     static WardenInjectMgr* instance();
 
+    const std::string _prePayload = "wlbuf = '';";
+    const std::string _postPayload = "local a,b=loadstring(wlbuf)if not a then message(b)else a()end";
+    const std::string _midPayloadFmt = "local a=ServerAlertFrame;local b=ServerAlertText;local c=ServerAlertTitle;local d=CharacterSelect;if a~=nil or b~=nil or c~=nil or d~=nil then a:SetParent(d)ServerAlertTitle:SetText('{}')ServerAlertText:SetText('{}')a:Show()else message('ServerAlert(Frame|Text|Title)/CharacterSelect Frame is nil.')end";
+    uint16 _prePayloadId = 9500;
+    uint16 _postPayloadId = 9501;
+    uint16 _tmpPayloadId = 9502;
+    std::string testPayload = "function ModifyTooltipStats(event, player, item, tooltip, ext) if item:GetStatsCount() > 0 then for i = 1, tooltip:GetLineCount() do local line = tooltip:GetLine(i) if string.find(line, '%+(%d+) ([%w%p]+)') then line = line:gsub('%+(%d+)', function (num) return '+'..(tonumber(num) * 1.1) end) tooltip:SetLine(i, line) end end end end hooksecurefunc('GameTooltip_SetDefaultAnchor', function(tooltip, parent) local _, item = tooltip:GetItem() if item then tooltip:HookScript('OnTooltipSetItem', function(tooltip) ModifyTooltipStats(tooltip, item) end) end end)";
+
     std::vector<std::string> GetChunks(std::string s, uint8_t chunkSize);
-    bool TryReadFile(std::string& path, std::string& bn_Result);
-    void SendWardenInject(Player* player, std::string payload);
+    bool SendWardenInject(Player* player, std::string payload);
 
-private:
-
+    std::string LoadLuaFile(const std::string& filePath);
+    void ConvertToPayload(std::string& luaCode);
+    std::string GetPayloadFromFile(std::string filePath);
 };
 
 #define sWardenInjectMgr WardenInjectMgr::instance()

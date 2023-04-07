@@ -17,6 +17,8 @@
 
 #include "GameTime.h"
 #include "ScriptMgr.h"
+#include "Chat.h"
+#include "WardenInjectMgr.h"
 
 using namespace Acore::ChatCommands;
 
@@ -29,7 +31,9 @@ public:
     {
         static ChatCommandTable commandTable =
                 {
-                        { "inject",        HandleInjectCommand,        SEC_ADMINISTRATOR,    Console::Yes }
+                        { "inject", HandleInjectCommand,        SEC_ADMINISTRATOR, Console::No },
+                        { "load",   HandleLoadLuaScriptCommand, SEC_ADMINISTRATOR, Console::No },
+                        { "fileinject",   HandleFileInjectCommand,    SEC_ADMINISTRATOR, Console::No },
                 };
 
         return commandTable;
@@ -40,7 +44,40 @@ public:
         if (message.empty())
             return false;
 
-        WorldSession* session = handler->GetSession();
+        Player* player = handler->GetPlayer();
+
+        std::string payload = std::string(message);
+        if (message == "test")
+        {
+            payload = sWardenInjectMgr->testPayload;
+        }
+        LOG_INFO("module", "Sending payload '{}'.", payload);
+        sWardenInjectMgr->SendWardenInject(player, payload);
+
+        return true;
+    }
+
+    static bool HandleFileInjectCommand(ChatHandler* handler, Tail message)
+    {
+        if (message.empty())
+            return false;
+
+        Player* player = handler->GetPlayer();
+
+        std::string payload = sWardenInjectMgr->GetPayloadFromFile(std::string(message));
+        sWardenInjectMgr->ConvertToPayload(payload);
+        LOG_INFO("module", "Sending payload '{}'.", payload);
+        sWardenInjectMgr->SendWardenInject(player, payload);
+
+        return true;
+    }
+
+    static bool HandleLoadLuaScriptCommand(ChatHandler* handler, Tail path)
+    {
+        std::string filePath = std::string(path);
+        std::string payload = sWardenInjectMgr->GetPayloadFromFile(filePath);
+        sWardenInjectMgr->ConvertToPayload(payload);
+        LOG_INFO("module", "Loaded payload '{}'.", payload);
 
         return true;
     }

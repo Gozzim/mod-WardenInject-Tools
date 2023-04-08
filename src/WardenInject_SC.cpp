@@ -54,6 +54,7 @@ public:
 
     void OnLogin(Player* player) override
     {
+        /*
         Warden* warden = player->GetSession()->GetWarden();
         if (!warden)
         {
@@ -70,6 +71,9 @@ public:
 
         uint32 payloadId = payloadMgr->RegisterPayload(testPayload);
         payloadMgr->QueuePayload(payloadId);
+         */
+
+        sWardenInjectMgr->InitialInjection(player);
     }
 };
 

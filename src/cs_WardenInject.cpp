@@ -29,11 +29,17 @@ public:
 
     ChatCommandTable GetCommands() const override
     {
+        static ChatCommandTable cfbgCommands =
+                {
+                        { "code",   HandleInjectCommand,        SEC_ADMINISTRATOR, Console::No },
+                        { "load",   HandleLoadLuaScriptCommand, SEC_ADMINISTRATOR, Console::No },
+                        { "file",   HandleFileInjectCommand,    SEC_ADMINISTRATOR, Console::No },
+                        { "init",   HandlePushInitCommand,      SEC_ADMINISTRATOR, Console::No}
+                };
+
         static ChatCommandTable commandTable =
                 {
-                        { "inject", HandleInjectCommand,        SEC_ADMINISTRATOR, Console::No },
-                        { "load",   HandleLoadLuaScriptCommand, SEC_ADMINISTRATOR, Console::No },
-                        { "fileinject",   HandleFileInjectCommand,    SEC_ADMINISTRATOR, Console::No },
+                        { "inject",  injectCommands },
                 };
 
         return commandTable;
@@ -52,7 +58,16 @@ public:
             payload = sWardenInjectMgr->testPayload;
         }
         LOG_INFO("module", "Sending payload '{}'.", payload);
-        sWardenInjectMgr->SendWardenInject(player, payload);
+        //sWardenInjectMgr->SendWardenInject(player, payload);
+        sWardenInjectMgr->SendAddonMessage("ws", payload, CHAT_MSG_WHISPER, player);
+
+        return true;
+    }
+
+    static bool HandlePushInitCommand(ChatHandler* handler)
+    {
+        Player* player = handler->GetPlayer();
+        sWardenInjectMgr->PushInitModule(player);
 
         return true;
     }

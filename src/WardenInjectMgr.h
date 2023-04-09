@@ -40,7 +40,7 @@
 
 #define MAX_PAYLOAD_SIZE 900
 const std::string cGTN = "wi";
-const std::string dbg = "false";
+const std::string dbg = "true";
 
 class WardenInjectMgr
 {
@@ -61,6 +61,10 @@ public:
     void PushInitModule(Player* player);
     void SendAddonMessage(const std::string& prefix, const std::string& payload, ChatMsg msgType, Player* player);
     void SendAddonInjector(Player* player);
+    void SendPayloadInform(Player* player);
+    void SendLargePayload(Player* player, const std::string& addon, int version, bool cache, bool comp, const std::string& data);
+    void SendSpecificPayload(Player* player, std::string payloadName);
+    //void OnAddonMessageReceived(Player* player, int _type, const std::string& header, const std::string& data, Player* target);
 
     std::vector<std::string> GetChunks(std::string s, uint8_t chunkSize);
     bool SendWardenInject(Player* player, std::string payload);

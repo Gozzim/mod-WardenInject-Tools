@@ -29,18 +29,22 @@ public:
 
     ChatCommandTable GetCommands() const override
     {
-        static ChatCommandTable cfbgCommands =
-                {
-                        { "code",   HandleInjectCommand,        SEC_ADMINISTRATOR, Console::No },
-                        { "load",   HandleLoadLuaScriptCommand, SEC_ADMINISTRATOR, Console::No },
-                        { "file",   HandleFileInjectCommand,    SEC_ADMINISTRATOR, Console::No },
-                        { "init",   HandlePushInitCommand,      SEC_ADMINISTRATOR, Console::No}
-                };
+        static ChatCommandTable injectCommands =
+            {
+                { "code", HandleInjectCommand,        SEC_ADMINISTRATOR, Console::No },
+                { "load", HandleLoadLuaScriptCommand, SEC_ADMINISTRATOR, Console::No },
+                { "file", HandleFileInjectCommand,    SEC_ADMINISTRATOR, Console::No },
+                { "init", HandlePushInitCommand,      SEC_ADMINISTRATOR, Console::No },
+                { "inform", HandleInformCommand,        SEC_ADMINISTRATOR, Console::No },
+                { "force", HandleForceCommand,        SEC_ADMINISTRATOR, Console::No},
+                { "request", HandleRequestCommand,          SEC_ADMINISTRATOR, Console::No },
+                { "specific", HandleSpecificCommand, SEC_ADMINISTRATOR, Console::No }
+            };
 
         static ChatCommandTable commandTable =
-                {
-                        { "inject",  injectCommands },
-                };
+            {
+                { "inject", injectCommands },
+            };
 
         return commandTable;
     }
@@ -48,7 +52,9 @@ public:
     static bool HandleInjectCommand(ChatHandler* handler, Tail message)
     {
         if (message.empty())
+        {
             return false;
+        }
 
         Player* player = handler->GetPlayer();
 
@@ -64,6 +70,81 @@ public:
         return true;
     }
 
+    static bool HandleInformCommand(ChatHandler* handler)
+    {
+        Player* player = handler->GetPlayer();
+        sWardenInjectMgr->SendPayloadInform(player);
+
+        return true;
+    }
+
+    static bool HandleSpecificCommand(ChatHandler* handler, Tail message)
+    {
+        if (message.empty())
+        {
+            return false;
+        }
+
+        std::string payloadName = std::string(message);
+
+        Player* player = handler->GetPlayer();
+        sWardenInjectMgr->SendSpecificPayload(player, payloadName);
+
+        return true;
+    }
+
+    static bool HandleForceCommand(ChatHandler* handler)
+    {
+        Player* player = handler->GetPlayer();
+        WorldSession* session = player->GetSession();
+        if (!session)
+        {
+            return false;
+        }
+
+        WardenWin* warden = (WardenWin*)session->GetWarden();
+        if (!warden)
+        {
+            return false;
+        }
+
+        if (!warden->IsInitialized())
+        {
+            return false;
+        }
+
+        return warden->GetPayloadMgr();
+        warden->ForceChecks();
+
+        return true;
+    }
+
+    static bool HandleRequestCommand(ChatHandler* handler)
+    {
+        Player* player = handler->GetPlayer();
+        WorldSession* session = player->GetSession();
+        if (!session)
+        {
+            return false;
+        }
+
+        WardenWin* warden = (WardenWin*)session->GetWarden();
+        if (!warden)
+        {
+            return false;
+        }
+
+        if (!warden->IsInitialized())
+        {
+            return false;
+        }
+
+        return warden->GetPayloadMgr();
+        warden->RequestChecks();
+
+        return true;
+    }
+
     static bool HandlePushInitCommand(ChatHandler* handler)
     {
         Player* player = handler->GetPlayer();
@@ -75,7 +156,9 @@ public:
     static bool HandleFileInjectCommand(ChatHandler* handler, Tail message)
     {
         if (message.empty())
+        {
             return false;
+        }
 
         Player* player = handler->GetPlayer();
 

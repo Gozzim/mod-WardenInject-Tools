@@ -22,8 +22,6 @@
 #include "Warden.h"
 #include "WardenInjectMgr.h"
 
-std::string testPayload = "message('Welcome to the server!');";
-
 class WardenInjectPlayer : public PlayerScript
 {
 public:
@@ -74,6 +72,46 @@ public:
          */
 
         sWardenInjectMgr->InitialInjection(player);
+    }
+
+    void OnChat(Player* player, uint32 type, uint32 lang, std::string& msg) override
+    {
+        if (lang != LANG_ADDON || type != CHAT_MSG_WHISPER)
+        {
+            return;
+        }
+/*
+        uint8 myMsgType;
+        uint32 myLang;
+        uint64 mySenderGUID;
+        uint32 myFlags;
+        uint64 myReceiverGUID;
+        uint32 myMsgLen;
+        std::string myFullMsg;
+
+        data >> myMsgType;
+        data >> myLang;
+        data >> mySenderGUID;
+        data >> myFlags;
+        data >> myReceiverGUID;
+        data >> myMsgLen;
+        data >> myFullMsg;
+
+        std::string header = myFullMsg.substr(0, myFullMsg.find("\t"));
+
+        LOG_INFO("module", "Received addon myMsgType: {}", myMsgType);
+        LOG_INFO("module", "Received addon myLang: {}", myLang);
+        LOG_INFO("module", "Received addon mySenderGUID: {}", mySenderGUID);
+        LOG_INFO("module", "Received addon myFlags: {}", myFlags);
+        LOG_INFO("module", "Received addon myReceiverGUID: {}", myReceiverGUID);
+        LOG_INFO("module", "Received addon myMsgLen: {}", myMsgLen);
+        LOG_INFO("module", "Received addon myFullMsg: {}", myFullMsg);
+
+        Player* sender = ObjectAccessor::FindPlayer(mySenderGUID);
+        Player* receiver = ObjectAccessor::FindPlayer(myReceiverGUID);
+*/
+        LOG_INFO("module", "Received addon msg: {}", msg);
+        //sWardenInjectMgr->OnAddonMessageReceived(sender, CHAT_MSG_WHISPER, header, msg, receiver);
     }
 };
 

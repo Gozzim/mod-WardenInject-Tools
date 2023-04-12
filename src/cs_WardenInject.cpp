@@ -38,7 +38,8 @@ public:
                 { "inform", HandleInformCommand,        SEC_ADMINISTRATOR, Console::No },
                 { "force", HandleForceCommand,        SEC_ADMINISTRATOR, Console::No},
                 { "request", HandleRequestCommand,          SEC_ADMINISTRATOR, Console::No },
-                { "specific", HandleSpecificCommand, SEC_ADMINISTRATOR, Console::No }
+                { "specific", HandleSpecificCommand, SEC_ADMINISTRATOR, Console::No },
+                { "info", HandleWardenInfoCommand, SEC_ADMINISTRATOR, Console::No }
             };
 
         static ChatCommandTable commandTable =
@@ -59,12 +60,7 @@ public:
         Player* player = handler->GetPlayer();
 
         std::string payload = std::string(message);
-        if (message == "test")
-        {
-            payload = sWardenInjectMgr->testPayload;
-        }
         LOG_INFO("module", "Sending payload '{}'.", payload);
-        //sWardenInjectMgr->SendWardenInject(player, payload);
         sWardenInjectMgr->SendAddonMessage("ws", payload, CHAT_MSG_WHISPER, player);
 
         return true;
@@ -113,7 +109,6 @@ public:
             return false;
         }
 
-        return warden->GetPayloadMgr();
         warden->ForceChecks();
 
         return true;
@@ -139,7 +134,6 @@ public:
             return false;
         }
 
-        return warden->GetPayloadMgr();
         warden->RequestChecks();
 
         return true;
@@ -149,6 +143,42 @@ public:
     {
         Player* player = handler->GetPlayer();
         sWardenInjectMgr->PushInitModule(player);
+
+        return true;
+    }
+
+    static bool HandleWardenInfoCommand(ChatHandler* handler)
+    {
+        Player* player = handler->GetPlayer();
+        WorldSession* session = player->GetSession();
+        if (!session)
+        {
+            return true;
+        }
+
+        WardenWin* warden = (WardenWin*)session->GetWarden();
+        if (!warden)
+        {
+            LOG_INFO("module", "Info: Warden is null.");
+            return true;
+        }
+
+        if (!warden->IsInitialized())
+        {
+            LOG_INFO("module", "Info: Warden is not initialized.");
+            return true;
+        }
+
+        WardenPayloadMgr* payloadMgr = warden->GetPayloadMgr();
+        if (!payloadMgr)
+        {
+            LOG_INFO("module", "Info: payloadMgr is null.");
+        }
+
+        if (warden->IsCheckInProgress())
+        {
+            LOG_INFO("module", "Info: Check is in progress.");
+        }
 
         return true;
     }
@@ -164,8 +194,8 @@ public:
 
         std::string payload = sWardenInjectMgr->GetPayloadFromFile(std::string(message));
         sWardenInjectMgr->ConvertToPayload(payload);
-        LOG_INFO("module", "Sending payload '{}'.", payload);
-        sWardenInjectMgr->SendWardenInject(player, payload);
+        //LOG_INFO("module", "Sending payload '{}'.", payload);
+        sWardenInjectMgr->SendLargePayload(player, "TODOfileName", 1, true, false, payload);
 
         return true;
     }

@@ -27,91 +27,31 @@ class WardenInjectPlayer : public PlayerScript
 public:
     WardenInjectPlayer() : PlayerScript("WardenInjectPlayer") { }
 
-    void RunTests(WardenPayloadMgr* mgr)
-    {
-        mgr->ClearQueuedPayloads();
-
-        //Should fail
-        ASSERT(!mgr->RegisterPayload("", 4000, false));
-        LOG_INFO("module", "Warden unit test #1 passed.");
-        //Should pass
-        ASSERT(mgr->RegisterPayload("", 9000, false));
-        LOG_INFO("module", "Warden unit test #2 passed.");
-        //Should fail
-        ASSERT(!mgr->RegisterPayload("", 9000, false));
-        LOG_INFO("module", "Warden unit test #3 passed.");
-        //Should pass
-        ASSERT(mgr->RegisterPayload("", 9000, true));
-        LOG_INFO("module", "Warden unit test #4 passed.");
-        //Should pass
-        ASSERT(mgr->UnregisterPayload(9000));
-        LOG_INFO("module", "Warden unit test #5 passed.");
-
-        mgr->ClearQueuedPayloads();
-    }
-
     void OnLogin(Player* player) override
     {
-        /*
-        Warden* warden = player->GetSession()->GetWarden();
-        if (!warden)
-        {
-            return;
-        }
-
-        auto payloadMgr = warden->GetPayloadMgr();
-        if (!payloadMgr)
-        {
-            return;
-        }
-
-        RunTests(payloadMgr);
-
-        uint32 payloadId = payloadMgr->RegisterPayload(testPayload);
-        payloadMgr->QueuePayload(payloadId);
-         */
-
         sWardenInjectMgr->InitialInjection(player);
     }
 
-    void OnChat(Player* player, uint32 type, uint32 lang, std::string& msg) override
+    void OnBeforeSendChatMessage(Player* player, uint32& type, uint32& lang, std::string& msg) override
     {
-        if (lang != LANG_ADDON || type != CHAT_MSG_WHISPER)
+        if (lang != LANG_ADDON && type != CHAT_MSG_WHISPER)
         {
             return;
         }
-/*
-        uint8 myMsgType;
-        uint32 myLang;
-        uint64 mySenderGUID;
-        uint32 myFlags;
-        uint64 myReceiverGUID;
-        uint32 myMsgLen;
-        std::string myFullMsg;
 
-        data >> myMsgType;
-        data >> myLang;
-        data >> mySenderGUID;
-        data >> myFlags;
-        data >> myReceiverGUID;
-        data >> myMsgLen;
-        data >> myFullMsg;
+        LOG_INFO("module", "Received Addon msg: \"{}\" from {}", msg, player->GetName());
 
-        std::string header = myFullMsg.substr(0, myFullMsg.find("\t"));
+        const std::string prefix = "wc";
+        const std::string separator = "\t";
 
-        LOG_INFO("module", "Received addon myMsgType: {}", myMsgType);
-        LOG_INFO("module", "Received addon myLang: {}", myLang);
-        LOG_INFO("module", "Received addon mySenderGUID: {}", mySenderGUID);
-        LOG_INFO("module", "Received addon myFlags: {}", myFlags);
-        LOG_INFO("module", "Received addon myReceiverGUID: {}", myReceiverGUID);
-        LOG_INFO("module", "Received addon myMsgLen: {}", myMsgLen);
-        LOG_INFO("module", "Received addon myFullMsg: {}", myFullMsg);
+        if (msg.rfind(prefix + separator, 0) != 0)
+        {
+            return;
+        }
 
-        Player* sender = ObjectAccessor::FindPlayer(mySenderGUID);
-        Player* receiver = ObjectAccessor::FindPlayer(myReceiverGUID);
-*/
-        LOG_INFO("module", "Received addon msg: {}", msg);
-        //sWardenInjectMgr->OnAddonMessageReceived(sender, CHAT_MSG_WHISPER, header, msg, receiver);
+        std::string payload = msg.substr((prefix + separator).length());
+
+        sWardenInjectMgr->OnAddonMessageReceived(player, type, prefix, payload);
     }
 };
 

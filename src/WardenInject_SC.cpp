@@ -39,8 +39,6 @@ public:
             return;
         }
 
-        LOG_INFO("module", "Received Addon msg: \"{}\" from {}", msg, player->GetName());
-
         const std::string prefix = "wc";
         const std::string separator = "\t";
 

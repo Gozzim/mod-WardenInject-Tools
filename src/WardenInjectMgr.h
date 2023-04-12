@@ -38,10 +38,12 @@
  * 1. Server sided Caching
  * 2. Client sided Caching
  * 3. Compression
+ * 4. Debug Logging
  */
 
 #define MAX_PAYLOAD_SIZE 900
-const std::string cGTN = "wc";
+// TODO: Add in config
+const std::string cGTN = "wi";
 const std::string dbg = "true";
 
 class WardenInjectMgr
@@ -49,8 +51,8 @@ class WardenInjectMgr
 public:
     static WardenInjectMgr* instance();
 
-    const std::string strOne = "wh=function(a,c,d) if a=='ws' and c=='WHISPER' and d==UnitName('player') then return true end return false end; wi=function() SendAddonMessage('wc', 'init', 'WHISPER', UnitName('player')) end";
-    const std::string strTwo = "local f=CreateFrame('Frame');f:RegisterEvent('CHAT_MSG_ADDON');f:SetScript('OnEvent', function(s,_,a,b,c,d) if _G['wh'](a, c, d) then forceinsecure(); loadstring(b)() end end) _G['wi']();";
+    const std::string strOne = "wh=function(a,c,d) if a=='ws' and c=='WHISPER' and d==UnitName('player') then return true end return false end wr=function() SendAddonMessage('wc', 'init', 'WHISPER', UnitName('player')) end";
+    const std::string strTwo = "local f=CreateFrame('Frame');f:RegisterEvent('CHAT_MSG_ADDON');f:SetScript('OnEvent', function(s,_,a,b,c,d) if _G['wh'](a, c, d) then forceinsecure(); loadstring(b)() end end) _G['wr']();";
 
     void InitialInjection(Player* player);
     void PushInitModule(Player* player);

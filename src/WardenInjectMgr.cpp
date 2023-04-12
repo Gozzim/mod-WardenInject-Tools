@@ -249,9 +249,7 @@ void WardenInjectMgr::SendPayloadInform(Player* player)
         }
 
         std::string message = Acore::StringFormatFmt("_G['{}'].f.i('{}', {}, {}, {})", cGTN, v, t.version, t.cached, t.compressed);
-        //LOG_INFO("module", "Sending payload inform: {}", message);
         SendAddonMessage("ws", message, CHAT_MSG_WHISPER, player);
-        //SendLargePayload(player, v, t.version, t.cached, t.compressed, t.payload);
     }
 }
 
@@ -273,8 +271,6 @@ void WardenInjectMgr::SendSpecificPayload(Player* player, std::string payloadNam
 
     std::string message = Acore::StringFormatFmt("_G['{}'].f.i('{}', {}, {}, {})", cGTN, payloadName, data.version, data.cached, data.compressed);
     SendAddonMessage("ws", message, CHAT_MSG_WHISPER, player);
-    //LOG_INFO("module", "Sending payload specific: {}", message);
-    //SendLargePayload(player, payloadName, data.version, data.cached, data.compressed, data.payload);
 }
 
 void WardenInjectMgr::SendAddonInjector(Player* player)
@@ -300,13 +296,14 @@ void WardenInjectMgr::SendAddonInjector(Player* player)
     SendAddonMessage("ws", "_G['" + cGTN + "'].f.r = function(a) RegisterForSave(a); end", CHAT_MSG_WHISPER, player);
 
     // Sends an inform to the player about the available payloads
-    //SendPayloadInform(player);
+    // TODO: add config to choose which payloads to send
+    SendPayloadInform(player);
 }
 
 void WardenInjectMgr::PushInitModule(Player* player)
 {
     SendAddonInjector(player);
-    SendAddonMessage("ws", "SendAddonMessage('wc', 'loaded', 'WHISPER', UnitName('player')); print('[WardenLoader]: Injection successful.')", CHAT_MSG_WHISPER, player);
+    SendAddonMessage("ws", "SendAddonMessage('wc', 'loaded', 'WHISPER', UnitName('player')); if(_G['" + cGTN + "'].d) then print('[WardenLoader]: Injection successful.') end", CHAT_MSG_WHISPER, player);
 }
 
 void WardenInjectMgr::InitialInjection(Player* player)
@@ -350,14 +347,17 @@ void WardenInjectMgr::InitialInjection(Player* player)
     }
 
     // Push to front of queue if NumLuaChecks > 1 as it reverts the order
+    // NumLuaChecks > 1 right now causes a weird behavior, rather don't use it
     bool pushToFront = sWorld->getIntConfig(CONFIG_WARDEN_NUM_LUA_CHECKS) > 1;
 
-    // warden->ForceChecks();
+    // TODO: Add config for forced checks
+    warden->ForceChecks();
     payloadMgr->QueuePayload(9601, pushToFront);
-    // warden->ForceChecks();
+    warden->ForceChecks();
     payloadMgr->QueuePayload(9602, pushToFront);
-    // warden->ForceChecks();
+    warden->ForceChecks();
 
+    // TODO: add verbose config
     ChatHandler(player->GetSession()).PSendSysMessage("[WardenLoader]: Awaiting injection...");
 }
 
@@ -368,7 +368,7 @@ void WardenInjectMgr::OnAddonMessageReceived(Player* player, uint32 type, const 
         return;
     }
 
-    LOG_INFO("module", "Header: \"{}\" - Data: \"{}\"", header, data);
+    LOG_DEBUG("module", "Received addon message containing Header: \"{}\" - Data: \"{}\"", header, data);
 
     if (header != "wc")
     {
@@ -382,18 +382,17 @@ void WardenInjectMgr::OnAddonMessageReceived(Player* player, uint32 type, const 
     }
     else if (data == "init")
     {
-        LOG_INFO("module", "WardenInjectMgr::OnAddonMessageReceived - Received initialized from player {}.", player->GetName());
+        LOG_DEBUG("module", "WardenInjectMgr::OnAddonMessageReceived - Received initialized from player {}.", player->GetName());
         PushInitModule(player);
     }
     else if (data == "loaded")
     {
         // module is loaded and ready to receive data
-        //player->SetData("ModuleInit", true);
-        LOG_INFO("module", "WardenInjectMgr::OnAddonMessageReceived - Received loaded command from player {}.", player->GetName());
+        LOG_DEBUG("module", "WardenInjectMgr::OnAddonMessageReceived - Received loaded command from player {}.", player->GetName());
     }
     else if (data == "kill")
     {
-        LOG_INFO("module", "WardenInjectMgr::OnAddonMessageReceived - Received kill command from player {}.", player->GetName());
+        LOG_DEBUG("module", "WardenInjectMgr::OnAddonMessageReceived - Received kill command from player {}.", player->GetName());
         // kill the initial loader, this is to prevent spoofed addon packets with access to the protected namespace
         // the initial injector can not be used after this point, and the injected helper functions above are the ones that need to be used.
         SendAddonMessage("ws", "false", CHAT_MSG_WHISPER, player);
@@ -404,7 +403,7 @@ void WardenInjectMgr::OnAddonMessageReceived(Player* player, uint32 type, const 
     else if (data.substr(0, 3) == "req")
     {
         std::string addon = data.substr(3);
-        LOG_INFO("module", "WardenInjectMgr::OnAddonMessageReceived - Received request for addon {} from player {}.", addon, player->GetName());
+        LOG_DEBUG("module", "WardenInjectMgr::OnAddonMessageReceived - Received request for addon {} from player {}.", addon, player->GetName());
         const WardenLoader::WardenData& data = wardenLoader.data[addon];
         if(data.payload.empty())
         {
@@ -414,5 +413,4 @@ void WardenInjectMgr::OnAddonMessageReceived(Player* player, uint32 type, const 
 
         SendLargePayload(player, addon, data.version, data.cached, data.compressed, data.payload);
     }
-
 }

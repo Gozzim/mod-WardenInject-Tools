@@ -195,6 +195,7 @@ WardenPayloadMgr* GetWardenPayloadMgr(WorldSession* session)
 void WardenInjectMgr::SendLargePayload(Player* player, const std::string& addon, int version, bool cache, bool comp, const std::string& data)
 {
     std::vector <uint8_t> compressedBytes;
+    /* TODO
     if (comp == 1)
     {
         compressedBytes = compress(data);
@@ -203,6 +204,7 @@ void WardenInjectMgr::SendLargePayload(Player* player, const std::string& addon,
             comp = 0;
         }
     }
+    */
     const uint32_t maxChunkSize = 900;
     std::vector<std::string> chunks;
     for (size_t i = 0; i < data.length(); i += maxChunkSize)

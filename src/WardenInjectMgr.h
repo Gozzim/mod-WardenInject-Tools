@@ -59,7 +59,7 @@ public:
     void SendAddonMessage(const std::string& prefix, const std::string& payload, ChatMsg msgType, Player* player);
     void SendAddonInjector(Player* player);
     void SendPayloadInform(Player* player);
-    void SendLargePayload(Player* player, const std::string& addon, int version, bool cache, bool comp, const std::string& data);
+    void SendLargePayload(Player* player, const std::string& addon, double version, bool cache, bool comp, const std::string& data);
     void SendSpecificPayload(Player* player, std::string payloadName);
     void OnAddonMessageReceived(Player* player, uint32 type, const std::string& header, const std::string& data);
 

@@ -193,7 +193,7 @@ public:
         Player* player = handler->GetPlayer();
 
         std::string payload = sWardenInjectMgr->GetPayloadFromFile(std::string(message));
-        sWardenInjectMgr->ConvertToPayload(payload);
+        //sWardenInjectMgr->ConvertToPayload(payload);
         //LOG_INFO("module", "Sending payload '{}'.", payload);
         sWardenInjectMgr->SendLargePayload(player, "TODOfileName", 1, true, false, payload);
 

@@ -261,8 +261,6 @@ void WardenInjectMgr::SendLargePayload(Player* player, const std::string& addon,
     }
 }
 
-// .inj file /home/kempec/acore-server/warden_scripts/ExampleClient.lua
-
 void WardenInjectMgr::SendPayloadInform(Player* player)
 {
     // If the player has any payloads already cached, then they will be loaded immediately

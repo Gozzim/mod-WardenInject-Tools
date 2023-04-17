@@ -24,19 +24,19 @@ WardenInjectMgr* WardenInjectMgr::instance()
     return &instance;
 }
 
-void WardenInjectMgr::LoadConfig(bool reload)
+void WardenInjectMgr::LoadConfig(/*bool reload*/)
 {
     WardenInjectEnabled = sConfigMgr->GetOption<bool>("WardenInject.Enable", true);
     Announce = sConfigMgr->GetOption<bool>("WardenInject.Announce", true);
     ScriptsPath = sConfigMgr->GetOption<std::string>("WardenInject.ScriptsPath", "~/acore-server/payloads");
     OnLoginInject = sConfigMgr->GetOption<bool>("WardenInject.OnLogin", true);
 
-    LoadOnLoginScripts(reload);
+    LoadOnLoginScripts();
 }
 
-void WardenInjectMgr::LoadOnLoginScripts(bool reload)
+void WardenInjectMgr::LoadOnLoginScripts()
 {
-    bool changed = false;
+    //bool changed = false;
 
     std::vector<std::string> scripts = sConfigMgr->GetKeysByString("WardenInject.Scripts.");
     for (std::string const& script : scripts)
@@ -60,6 +60,10 @@ void WardenInjectMgr::LoadOnLoginScripts(bool reload)
         else if (scriptConfig == "OnLogin")
         {
             wardenScriptsMap[scriptName].SetOnLogin(sConfigMgr->GetOption<bool>(script, true));
+        }
+        else if (scriptConfig == "Order")
+        {
+            wardenScriptsMap[scriptName].SetOrderNum(sConfigMgr->GetOption<uint16>(script, 0));
         }
         else if (scriptConfig == "Path")
         {
@@ -88,19 +92,6 @@ void WardenInjectMgr::LoadOnLoginScripts(bool reload)
     }
 
     // ToDo: Send reload message to all players
-}
-
-int32 WardenInjectMgr::GetOrderNumber(std::string payloadName)
-{
-    auto it = wardenScriptsMap.find(payloadName);
-
-    if (it != wardenScriptsMap.end()) {
-        int32 index = std::distance(wardenScriptsMap.begin(), it);
-        return index;
-    }
-
-    LOG_WARN("module", "WardenInject: OrderNumber for {} not found", payloadName);
-    return -1;
 }
 
 std::string WardenInjectMgr::ReplaceEmptyCurlyBraces(std::string str) {
@@ -265,7 +256,7 @@ WardenPayloadMgr* GetWardenPayloadMgr(WorldSession* session)
 
 void WardenInjectMgr::SendLargePayload(Player* player, const std::string& addon, float version, bool cache, bool comp, const std::string& data)
 {
-    std::vector <uint8_t> compressedBytes;
+    std::vector <uint8> compressedBytes;
     /* TODO
     if (comp == 1)
     {
@@ -276,21 +267,25 @@ void WardenInjectMgr::SendLargePayload(Player* player, const std::string& addon,
         }
     }
     */
-    const uint32_t maxChunkSize = 900;
+    const uint32 maxChunkSize = 900;
     std::vector<std::string> chunks;
+
     for (uint32 i = 0; i < data.length(); i += maxChunkSize)
     {
         chunks.push_back(data.substr(i, maxChunkSize));
     }
+
     if (chunks.size() > 99)
     {
         return;
     }
+
     std::string payloadSizeStr = std::to_string(chunks.size());
     if (chunks.size() < 10)
     {
         payloadSizeStr = "0" + payloadSizeStr;
     }
+
     for (uint32 i = 0; i < chunks.size(); i++)
     {
         std::string chunkNumStr = std::to_string(i + 1);
@@ -298,10 +293,12 @@ void WardenInjectMgr::SendLargePayload(Player* player, const std::string& addon,
         {
             chunkNumStr = "0" + chunkNumStr;
         }
+
         std::string payload = Acore::StringFormatFmt("_G['{}'].f.p('{}', '{}', '{}', {}, {}, {}, [[{}]]);", cGTN, chunkNumStr, payloadSizeStr, addon, version, cache, comp, chunks[i].c_str());
-        if (comp == 1)
+
+        if (comp)
         {
-            std::string payload = Acore::StringFormatFmt("_G['{}'].f.p('{}', '{}', '{}', {}, {}, {}, [[{}]]);", cGTN, chunkNumStr, payloadSizeStr, addon, version, cache, comp, (std::string(compressedBytes.begin(), compressedBytes.end())));
+            std::string payload = Acore::StringFormatFmt("_G['{}'].f.p('{}', '{}', '{}', {}, {}, {}, [[{}]]);", cGTN, chunkNumStr, payloadSizeStr, addon, version, cache, comp, std::string(compressedBytes.begin(), compressedBytes.end()));
         }
 
         SendAddonMessage("ws", payload, CHAT_MSG_WHISPER, player);
@@ -310,19 +307,25 @@ void WardenInjectMgr::SendLargePayload(Player* player, const std::string& addon,
 
 void WardenInjectMgr::SendPayloadInform(Player* player)
 {
-    uint32 orderNum = 0;
-    for (auto& [payloadName, data] : wardenScriptsMap) {
-        if (!data.IsOnLogin()) {
-            orderNum++;
-            continue;
-        }
-        // register all saved variables if there are any
-        for (const auto& var : data.GetSavedVars()) {
-            SendAddonMessage("ws", "_G['" + cGTN + "'].f.r('" + var + "')", CHAT_MSG_WHISPER, player);
-        }
+    for (uint16 i = 0; i < wardenScriptsMap.size(); i++)
+    {
+        for (auto& [payloadName, data] : wardenScriptsMap) {
+            if (data.GetOrderNum() != i) {
+                continue;
+            }
 
-        std::string message = Acore::StringFormatFmt("_G['{}'].f.i('{}', {}, {}, {}, {})", cGTN, payloadName, data.GetVersion(), data.IsCached(), data.IsCompressed(), orderNum++);
-        SendAddonMessage("ws", message, CHAT_MSG_WHISPER, player);
+            if (!data.IsOnLogin()) {
+                continue;
+            }
+            // register all saved variables if there are any
+            for (const auto& var : data.GetSavedVars()) {
+                SendAddonMessage("ws", "_G['" + cGTN + "'].f.r('" + var + "')", CHAT_MSG_WHISPER, player);
+            }
+
+            LOG_DEBUG("module", "Sending payload: {} with orderNumber {}", payloadName, data.GetOrderNum());
+            std::string message = Acore::StringFormatFmt("_G['{}'].f.i('{}', {}, {}, {}, {})", cGTN, payloadName, data.GetVersion(), data.IsCached(), data.IsCompressed(), data.GetOrderNum());
+            SendAddonMessage("ws", message, CHAT_MSG_WHISPER, player);
+        }
     }
 }
 
@@ -340,7 +343,8 @@ void WardenInjectMgr::SendSpecificPayload(Player* player, std::string payloadNam
         SendAddonMessage("ws", "_G['" + cGTN + "'].f.r('" + var + "')", CHAT_MSG_WHISPER, player);
     }
 
-    std::string message = Acore::StringFormatFmt("_G['{}'].f.i('{}', {}, {}, {}, {})", cGTN, payloadName, data.GetVersion(), data.IsCached(), data.IsCompressed(), GetOrderNumber(payloadName));
+    LOG_DEBUG("module", "Sending specific payload: {} with orderNumber {}", payloadName, data.GetOrderNum());
+    std::string message = Acore::StringFormatFmt("_G['{}'].f.i('{}', {}, {}, {}, {})", cGTN, payloadName, data.GetVersion(), data.IsCached(), data.IsCompressed(), data.GetOrderNum());
     SendAddonMessage("ws", message, CHAT_MSG_WHISPER, player);
 }
 

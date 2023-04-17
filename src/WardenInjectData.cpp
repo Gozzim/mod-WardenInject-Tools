@@ -6,6 +6,7 @@ WardenInjectData::WardenInjectData()
     compressed = false;
     cached = true;
     onLogin = false;
+    orderNum = 0;
     payload = "";
     savedVars = {};
 }
@@ -52,6 +53,16 @@ bool WardenInjectData::IsOnLogin()
 void WardenInjectData::SetOnLogin(bool _onLogin)
 {
     onLogin = _onLogin;
+}
+
+uint16 WardenInjectData::GetOrderNum()
+{
+    return orderNum;
+}
+
+void WardenInjectData::SetOrderNum(uint16 _orderNum)
+{
+    orderNum = _orderNum;
 }
 
 std::string WardenInjectData::GetPayload()

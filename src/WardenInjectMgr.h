@@ -38,10 +38,12 @@
 
 /**
  * TODO:
- * 1. Server sided Caching
- * 2. Client sided Caching
- * 3. Compression
- * 4. Debug Logging
+ * [ ] Server sided Caching
+ * [ ] Client sided Caching
+ * [ ] Compression
+ * [ ] Debug Logging
+ * [ ] Cleanup Imports
+ * [ ] Optimize Loading Order
  *
  * Config:
  * - To be injected on login
@@ -69,7 +71,7 @@ public:
     std::string ScriptsPath;
     bool OnLoginInject;
 
-    void LoadConfig(bool reload);
+    void LoadConfig(/*bool reload*/);
 
     const std::string helperFuns = "wh=function(a,c,d) if a=='ws' and c=='WHISPER' and d==UnitName('player') then return true end return false end wr=function() SendAddonMessage('wc', 'init', 'WHISPER', UnitName('player')) end";
     const std::string execMsgEvent = "local f=CreateFrame('Frame');f:RegisterEvent('CHAT_MSG_ADDON');f:SetScript('OnEvent', function(s,_,a,b,c,d) if _G['wh'](a, c, d) then forceinsecure(); loadstring(b)() end end) _G['wr']();";
@@ -86,9 +88,7 @@ public:
     void SendSpecificPayload(Player* player, std::string payloadName);
     void OnAddonMessageReceived(Player* player, uint32 type, const std::string& header, const std::string& data);
 
-    void LoadOnLoginScripts(bool reload);
-
-    int32 GetOrderNumber(std::string payloadName);
+    void LoadOnLoginScripts();
 
     std::string LoadLuaFile(const std::string& filePath);
     void ConvertToPayload(std::string& luaCode);

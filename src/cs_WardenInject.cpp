@@ -32,7 +32,6 @@ public:
         static ChatCommandTable injectCommands =
             {
                 { "code", HandleInjectCodeCommand,        SEC_ADMINISTRATOR, Console::No },
-                { "load", HandleLoadLuaScriptCommand, SEC_ADMINISTRATOR, Console::No },
                 { "file", HandleFileInjectCommand,    SEC_ADMINISTRATOR, Console::No },
                 { "init", HandlePushInitCommand,      SEC_ADMINISTRATOR, Console::No },
                 { "inform", HandleInformCommand,        SEC_ADMINISTRATOR, Console::No },
@@ -218,17 +217,7 @@ public:
         std::string payload = sWardenInjectMgr->GetPayloadFromFile(std::string(filePath));
         sWardenInjectMgr->ConvertToPayload(payload);
         LOG_DEBUG("module", "WardenInjectCommands::HandleFileInjectCommand - Injecting payload '{}' into client of player {}.", sWardenInjectMgr->ReplaceCurlyBraces(payload), target->GetName());
-        sWardenInjectMgr->SendAddonMessage("ws", payload, CHAT_MSG_WHISPER, target);
-
-        return true;
-    }
-
-    static bool HandleLoadLuaScriptCommand(ChatHandler* handler, Tail path)
-    {
-        std::string filePath = std::string(path);
-        std::string payload = sWardenInjectMgr->GetPayloadFromFile(filePath);
-        sWardenInjectMgr->ConvertToPayload(payload);
-        LOG_INFO("module", "Loaded payload '{}'.", payload);
+        sWardenInjectMgr->SendLargePayload(target, "addonName", 1.0, true, false, payload);
 
         return true;
     }

@@ -21,6 +21,9 @@ public:
     bool IsOnLogin();
     void SetOnLogin(bool _onLogin);
 
+    uint16 GetOrderNum();
+    void SetOrderNum(uint16 _orderNum);
+
     std::string GetPayload();
     void SetPayload(std::string _payload);
 
@@ -35,6 +38,7 @@ private:
     bool compressed;
     bool cached;
     bool onLogin;
+    uint16 orderNum;
     std::string payload;
     std::vector<std::string> savedVars;
 };

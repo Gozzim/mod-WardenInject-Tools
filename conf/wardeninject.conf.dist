@@ -31,6 +31,7 @@ WardenInject.Scripts.lualzw.Version = 1.0
 WardenInject.Scripts.lualzw.Compressed = 0
 WardenInject.Scripts.lualzw.Cached = 1
 WardenInject.Scripts.lualzw.OnLogin = 1
+WardenInject.Scripts.lualzw.Order = 0
 WardenInject.Scripts.lualzw.Path = "/home/kempec/acore-server/warden_scripts/lualzw.lua"
 WardenInject.Scripts.lualzw.SavedVars = "";
 
@@ -38,6 +39,7 @@ WardenInject.Scripts.Smallfolk.Version = 1.0
 WardenInject.Scripts.Smallfolk.Compressed = 0
 WardenInject.Scripts.Smallfolk.Cached = 1
 WardenInject.Scripts.Smallfolk.OnLogin = 1
+WardenInject.Scripts.Smallfolk.Order = 1
 WardenInject.Scripts.Smallfolk.Path = "/home/kempec/acore-server/warden_scripts/Smallfolk.lua"
 WardenInject.Scripts.Smallfolk.SavedVars = "";
 
@@ -45,6 +47,7 @@ WardenInject.Scripts.Queue.Version = 1.0
 WardenInject.Scripts.Queue.Compressed = 0
 WardenInject.Scripts.Queue.Cached = 1
 WardenInject.Scripts.Queue.OnLogin = 1
+WardenInject.Scripts.Queue.Order = 2
 WardenInject.Scripts.Queue.Path = "/home/kempec/acore-server/warden_scripts/Queue.lua"
 WardenInject.Scripts.Queue.SavedVars = "";
 
@@ -52,6 +55,7 @@ WardenInject.Scripts.LibStub.Version = 1.0
 WardenInject.Scripts.LibStub.Compressed = 0
 WardenInject.Scripts.LibStub.Cached = 1
 WardenInject.Scripts.LibStub.OnLogin = 1
+WardenInject.Scripts.LibStub.Order = 3
 WardenInject.Scripts.LibStub.Path = "/home/kempec/acore-server/warden_scripts/LibStub.lua"
 WardenInject.Scripts.LibStub.SavedVars = "";
 
@@ -59,6 +63,7 @@ WardenInject.Scripts.LibWindow.Version = 1.0
 WardenInject.Scripts.LibWindow.Compressed = 0
 WardenInject.Scripts.LibWindow.Cached = 1
 WardenInject.Scripts.LibWindow.OnLogin = 1
+WardenInject.Scripts.LibWindow.Order = 4
 WardenInject.Scripts.LibWindow.Path = "/home/kempec/acore-server/warden_scripts/LibWindow.lua"
 WardenInject.Scripts.LibWindow.SavedVars = "";
 
@@ -66,6 +71,7 @@ WardenInject.Scripts.AIO.Version = 1.74
 WardenInject.Scripts.AIO.Compressed = 0
 WardenInject.Scripts.AIO.Cached = 1
 WardenInject.Scripts.AIO.OnLogin = 1
+WardenInject.Scripts.AIO.Order = 5
 WardenInject.Scripts.AIO.Path = "/home/kempec/acore-server/warden_scripts/AIO.lua"
 WardenInject.Scripts.AIO.SavedVars = "AIO_sv;AIO_sv_Addons"
 
@@ -73,5 +79,6 @@ WardenInject.Scripts.Example.Version = 1.0
 WardenInject.Scripts.Example.Compressed = 0
 WardenInject.Scripts.Example.Cached = 1
 WardenInject.Scripts.Example.OnLogin = 1
+WardenInject.Scripts.Example.Order = 6
 WardenInject.Scripts.Example.Path = "/home/kempec/acore-server/warden_scripts/ExampleFull.lua"
 WardenInject.Scripts.Example.SavedVars = "";

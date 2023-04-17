@@ -26,9 +26,9 @@ class WardenInject_Config : public WorldScript
 {
 public: WardenInject_Config() : WorldScript("WardenInject_Config") { };
 
-    void OnAfterConfigLoad(bool reload) override
+    void OnAfterConfigLoad(bool /*reload*/) override
     {
-        sWardenInjectMgr->LoadConfig(reload);
+        sWardenInjectMgr->LoadConfig(/*reload*/);
     }
 };
 

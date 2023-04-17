@@ -28,6 +28,7 @@ void WardenInjectMgr::LoadConfig(/*bool reload*/)
 {
     WardenInjectEnabled = sConfigMgr->GetOption<bool>("WardenInject.Enable", true);
     Announce = sConfigMgr->GetOption<bool>("WardenInject.Announce", true);
+    cGTN = sConfigMgr->GetOption<std::string>("WardenInject.ClientCacheTable", "wi");
     ScriptsPath = sConfigMgr->GetOption<std::string>("WardenInject.ScriptsPath", "~/acore-server/payloads");
     OnLoginInject = sConfigMgr->GetOption<bool>("WardenInject.OnLogin", true);
 
@@ -94,7 +95,7 @@ void WardenInjectMgr::LoadOnLoginScripts()
     // ToDo: Send reload message to all players
 }
 
-std::string WardenInjectMgr::ReplaceEmptyCurlyBraces(std::string str) {
+std::string WardenInjectMgr::ReplaceEmptyCurlyBraces(std::string& str) {
     std::string result;
 
     for (uint32 i = 0; i < str.size(); ++i)
@@ -113,7 +114,7 @@ std::string WardenInjectMgr::ReplaceEmptyCurlyBraces(std::string str) {
     return result;
 }
 
-std::string WardenInjectMgr::ReplaceCurlyBraces(std::string str) {
+std::string WardenInjectMgr::ReplaceCurlyBraces(std::string& str) {
     std::string result;
 
     for (char c : str) {
@@ -203,11 +204,11 @@ void WardenInjectMgr::ConvertToPayload(std::string& luaCode)
     luaCode = std::regex_replace(luaCode, commentRegex, "\n");
 
     // Remove leading tabs and whitespaces
-    std::regex leadingSpaceRegex("\n[ \t]+", std::regex_constants::optimize);
+    std::regex leadingSpaceRegex("\r?\n[ \t]+", std::regex_constants::optimize);
     luaCode = std::regex_replace(luaCode, leadingSpaceRegex, "\n");
 
     // Remove empty lines
-    std::regex emptyLineRegex("([ \t]*\r?\n)", std::regex_constants::optimize);
+    std::regex emptyLineRegex("\r?\n[ \t]*\r?\n", std::regex_constants::optimize);
     luaCode = std::regex_replace(luaCode, emptyLineRegex, "\n");
 
     // Replace line breaks with spaces

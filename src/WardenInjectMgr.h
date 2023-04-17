@@ -55,9 +55,10 @@
  */
 
 #define MAX_PAYLOAD_SIZE 900
+#define dbg "true"
 // TODO: Add in config
-const std::string cGTN = "wi";
-const std::string dbg = "true";
+//const std::string cGTN = "wi";
+//const std::string dbg = "true";
 
 class WardenInjectData;
 
@@ -70,14 +71,15 @@ public:
     bool Announce;
     std::string ScriptsPath;
     bool OnLoginInject;
+    std::string cGTN;
 
     void LoadConfig(/*bool reload*/);
 
     const std::string helperFuns = "wh=function(a,c,d) if a=='ws' and c=='WHISPER' and d==UnitName('player') then return true end return false end wr=function() SendAddonMessage('wc', 'init', 'WHISPER', UnitName('player')) end";
     const std::string execMsgEvent = "local f=CreateFrame('Frame');f:RegisterEvent('CHAT_MSG_ADDON');f:SetScript('OnEvent', function(s,_,a,b,c,d) if _G['wh'](a, c, d) then forceinsecure(); loadstring(b)() end end) _G['wr']();";
 
-    std::string ReplaceEmptyCurlyBraces(std::string str);
-    std::string ReplaceCurlyBraces(std::string str);
+    std::string ReplaceEmptyCurlyBraces(std::string& str);
+    std::string ReplaceCurlyBraces(std::string& str);
 
     void InitialInjection(Player* player);
     void PushInitModule(Player* player);

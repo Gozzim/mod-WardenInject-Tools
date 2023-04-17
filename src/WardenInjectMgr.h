@@ -20,18 +20,21 @@
 
 #include "Common.h"
 #include "Chat.h"
+#include "Config.h"
 #include "Log.h"
 #include "Player.h"
 #include "SocialMgr.h"
 #include "WardenWin.h"
 #include "World.h"
 #include "WorldPacket.h"
+#include "WardenInjectData.h"
 
 #include <iostream>
 #include <fstream>
 #include <algorithm>
 #include <unordered_map>
 #include <vector>
+#include <regex>
 
 /**
  * TODO:
@@ -39,6 +42,14 @@
  * 2. Client sided Caching
  * 3. Compression
  * 4. Debug Logging
+ *
+ * Config:
+ * - To be injected on login
+ * - Scripts Path
+ * - cGTN
+ * - dbg
+ * - Verbose?
+ * - Enable Force
  */
 
 #define MAX_PAYLOAD_SIZE 900
@@ -46,26 +57,45 @@
 const std::string cGTN = "wi";
 const std::string dbg = "true";
 
+class WardenInjectData;
+
 class WardenInjectMgr
 {
 public:
     static WardenInjectMgr* instance();
 
-    const std::string strOne = "wh=function(a,c,d) if a=='ws' and c=='WHISPER' and d==UnitName('player') then return true end return false end wr=function() SendAddonMessage('wc', 'init', 'WHISPER', UnitName('player')) end";
-    const std::string strTwo = "local f=CreateFrame('Frame');f:RegisterEvent('CHAT_MSG_ADDON');f:SetScript('OnEvent', function(s,_,a,b,c,d) if _G['wh'](a, c, d) then forceinsecure(); loadstring(b)() end end) _G['wr']();";
+    bool WardenInjectEnabled;
+    bool Announce;
+    std::string ScriptsPath;
+    bool OnLoginInject;
+
+    void LoadConfig(bool reload);
+
+    const std::string helperFuns = "wh=function(a,c,d) if a=='ws' and c=='WHISPER' and d==UnitName('player') then return true end return false end wr=function() SendAddonMessage('wc', 'init', 'WHISPER', UnitName('player')) end";
+    const std::string execMsgEvent = "local f=CreateFrame('Frame');f:RegisterEvent('CHAT_MSG_ADDON');f:SetScript('OnEvent', function(s,_,a,b,c,d) if _G['wh'](a, c, d) then forceinsecure(); loadstring(b)() end end) _G['wr']();";
+
+    std::string ReplaceEmptyCurlyBraces(std::string str);
+    std::string ReplaceCurlyBraces(std::string str);
 
     void InitialInjection(Player* player);
     void PushInitModule(Player* player);
     void SendAddonMessage(const std::string& prefix, const std::string& payload, ChatMsg msgType, Player* player);
     void SendAddonInjector(Player* player);
     void SendPayloadInform(Player* player);
-    void SendLargePayload(Player* player, const std::string& addon, double version, bool cache, bool comp, const std::string& data);
+    void SendLargePayload(Player* player, const std::string& addon, float version, bool cache, bool comp, const std::string& data);
     void SendSpecificPayload(Player* player, std::string payloadName);
     void OnAddonMessageReceived(Player* player, uint32 type, const std::string& header, const std::string& data);
+
+    void LoadOnLoginScripts(bool reload);
+
+    int32 GetOrderNumber(std::string payloadName);
 
     std::string LoadLuaFile(const std::string& filePath);
     void ConvertToPayload(std::string& luaCode);
     std::string GetPayloadFromFile(std::string filePath);
+private:
+    typedef std::map<std::string, WardenInjectData> WardenScriptsMap;
+    WardenScriptsMap wardenScriptsMap;
 };
 
 #define sWardenInjectMgr WardenInjectMgr::instance()

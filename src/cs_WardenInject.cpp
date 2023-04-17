@@ -31,7 +31,7 @@ public:
     {
         static ChatCommandTable injectCommands =
             {
-                { "code", HandleInjectCommand,        SEC_ADMINISTRATOR, Console::No },
+                { "code", HandleInjectCodeCommand,        SEC_ADMINISTRATOR, Console::No },
                 { "load", HandleLoadLuaScriptCommand, SEC_ADMINISTRATOR, Console::No },
                 { "file", HandleFileInjectCommand,    SEC_ADMINISTRATOR, Console::No },
                 { "init", HandlePushInitCommand,      SEC_ADMINISTRATOR, Console::No },
@@ -50,18 +50,29 @@ public:
         return commandTable;
     }
 
-    static bool HandleInjectCommand(ChatHandler* handler, Tail message)
+    static bool HandleInjectCodeCommand(ChatHandler* handler, Optional<PlayerIdentifier> player, Tail payload)
     {
-        if (message.empty())
+        if (payload.empty())
         {
             return false;
         }
 
-        Player* player = handler->GetPlayer();
+        if (!player)
+        {
+            player = PlayerIdentifier::FromTargetOrSelf(handler);
+        }
 
-        std::string payload = std::string(message);
-        LOG_INFO("module", "Sending payload '{}'.", payload);
-        sWardenInjectMgr->SendAddonMessage("ws", payload, CHAT_MSG_WHISPER, player);
+        Player* target = player->GetConnectedPlayer();
+
+        if (!target)
+        {
+            handler->SendSysMessage(LANG_PLAYER_NOT_FOUND);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        LOG_DEBUG("module", "WardenInjectCommands::HandleInjectCodeCommand - Injecting payload '{}' into client of player {}.", std::string(payload), target->GetName());
+        sWardenInjectMgr->SendAddonMessage("ws", std::string(payload), CHAT_MSG_WHISPER, target);
 
         return true;
     }
@@ -183,19 +194,31 @@ public:
         return true;
     }
 
-    static bool HandleFileInjectCommand(ChatHandler* handler, Tail message)
+    static bool HandleFileInjectCommand(ChatHandler* handler, Optional<PlayerIdentifier> player, Tail filePath)
     {
-        if (message.empty())
+        if (filePath.empty())
         {
             return false;
         }
 
-        Player* player = handler->GetPlayer();
+        if (!player)
+        {
+            player = PlayerIdentifier::FromTargetOrSelf(handler);
+        }
 
-        std::string payload = sWardenInjectMgr->GetPayloadFromFile(std::string(message));
-        //sWardenInjectMgr->ConvertToPayload(payload);
-        //LOG_INFO("module", "Sending payload '{}'.", payload);
-        sWardenInjectMgr->SendLargePayload(player, "TODOfileName", 1, true, false, payload);
+        Player* target = player->GetConnectedPlayer();
+
+        if (!target)
+        {
+            handler->SendSysMessage(LANG_PLAYER_NOT_FOUND);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        std::string payload = sWardenInjectMgr->GetPayloadFromFile(std::string(filePath));
+        sWardenInjectMgr->ConvertToPayload(payload);
+        LOG_DEBUG("module", "WardenInjectCommands::HandleFileInjectCommand - Injecting payload '{}' into client of player {}.", sWardenInjectMgr->ReplaceCurlyBraces(payload), target->GetName());
+        sWardenInjectMgr->SendAddonMessage("ws", payload, CHAT_MSG_WHISPER, target);
 
         return true;
     }

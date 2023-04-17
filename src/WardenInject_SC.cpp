@@ -22,6 +22,16 @@
 #include "Warden.h"
 #include "WardenInjectMgr.h"
 
+class WardenInject_Config : public WorldScript
+{
+public: WardenInject_Config() : WorldScript("WardenInject_Config") { };
+
+    void OnAfterConfigLoad(bool reload) override
+    {
+        sWardenInjectMgr->LoadConfig(reload);
+    }
+};
+
 class WardenInjectPlayer : public PlayerScript
 {
 public:
@@ -56,4 +66,5 @@ public:
 void AddWardenInjectScripts()
 {
     new WardenInjectPlayer();
+    new WardenInject_Config();
 }

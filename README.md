@@ -6,40 +6,65 @@
 
 ## Description
 
+**Warning**: Do not set config `NumLuaChecks` > 1 right now, as this causes a weird behavior
+
 ## ToDo List
-* [x] Implement Warden Packet Injection Initialization
+* [x] Warden Packet Injection Initialization
+  * [x] Inject primary helper functions for communication and execution
+  * [x] Inject functions to handle addon injection
+  * [x] Inject configured payloads
 * [ ] Implement injection from file
-  * [x] Implement basic file loading and injection
+  * [x] File loading
   * [ ] Implement file reformatting for injection
     * [x] Remove leading spaces
     * [x] Remove trailing spaces
     * [x] Remove empty lines
     * [x] Remove line breaks
     * [ ] Remove comments (still buggy)
-* [ ] Server sided Caching
-* [ ] Client sided Caching
-* [ ] Compression
-* [ ] Debug Logging
-* [ ] Optimize Loading Order
+  * [x] File injection
+* [ ] Payload Management
+  * [x] Injection to handle payloads
+  * [x] Chunk large payloads into multiple packets
+  * [ ] Compression
+  * [x] Payload Storage
+* [x] Event Handling
+  * [x] OnLogin: Initialize Injection
+  * [x] OnReload: Reinitialize Injection
+  * [x] Handle Script Injection requests
+* [ ] Caching
+  * [ ] Server-side
+  * [ ] Client-side
 * [ ] Commands
   * [x] Implement Command for code injection
   * [x] Implement Command for file injection
   * [x] Implement Command for preloaded Script injection
   * [x] Implement various debugging commands
   * [ ] Implement command to reload and notify players to relad UI
-* [ ] Event Handling
-  * [ ]
+  * [ ] DB query for commmands table
 * [ ] Implement config
   * [x] Config to enable addon injection initialization onLogin
   * [x] Config to load scripts for injection dynamically
-  * [ ] Add config for forced checks
-  * [ ] Add config verbose output
+  * [ ] Config for default script path
+  * [ ] Config for forced checks
+  * [ ] Config for verbose output
   * [ ] Debug client-side
   * [ ] Prefix for addon injection
+* [ ] Example Files
+  * [x] AIO and Dependencies
+  * [ ] Example payload
+* [ ] Optimize Loading Order
+* [ ] Debug Logging
 * [ ] Cleanup Imports and Code
+* [ ] Test AIO scripts after injection
 
 ## Features
+- Payload injection
+- Config
+  - 
+- Commands
+  - 
 
+## How it works
 
 ## Requirements
 Requires at least revision [azerothcore-wotlk@dba57a6](https://github.com/azerothcore/azerothcore-wotlk/commit/dba57a610776e1062c2677fe0dd4295a2b47f41c) of AzerothCore
@@ -51,7 +76,9 @@ Requires at least revision [azerothcore-wotlk@dba57a6](https://github.com/azerot
 ```
 
 ## Credits
-
+- Module for AzerothCore created by [Gozzim](https://github.com/Gozzim)
+- Based on [WardernInject](https://github.com/Foereaper/WardenInject) by [Foereaper](https://github.com/Foereaper)
+- AzerothCore: [repository](https://github.com/azerothcore) - [website](http://azerothcore.org/)
 
 ## License
-This code and content is released under the [AGPL 3.0 license](https://github.com/Gozzim/mod-WardenInject-Tools/blob/master/LICENSE).
+This code and content is released under the [GNU AGPL 3.0 license](https://github.com/Gozzim/mod-WardenInject-Tools/blob/master/LICENSE).

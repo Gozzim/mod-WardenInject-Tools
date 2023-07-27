@@ -219,6 +219,7 @@ void WardenInjectMgr::ConvertToPayload(std::string& luaCode)
 
 std::string WardenInjectMgr::GetPayloadFromFile(std::string filePath)
 {
+    // ToDo: If filePath starts with / (or in Windows with [A-Z]:\) then use it as absolute path, otherwise use it as relative path from payload directory
     std::string luaCode = LoadLuaFile(filePath);
     if (luaCode.empty())
     {

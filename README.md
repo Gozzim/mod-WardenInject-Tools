@@ -15,6 +15,7 @@
   * [x] Inject configured payloads
 * [ ] Implement injection from file
   * [x] File loading
+  * [ ] Load file from set ScriptPath or root depending on start of path string
   * [ ] Implement file reformatting for injection
     * [x] Remove leading spaces
     * [x] Remove trailing spaces
@@ -43,31 +44,27 @@
   * [ ] DB query for commmands table
 * [ ] Implement config
   * [x] Config to enable addon injection initialization onLogin
+  * [x] Config client cache table location
   * [x] Config to load scripts for injection dynamically
-  * [ ] Config for default script path
+  * [x] Config for default script path
   * [ ] Config for forced checks
   * [ ] Config for verbose output
   * [ ] Debug client-side
   * [ ] Prefix for addon injection
+  * [ ] Default path script to {source}/modules/mod-WardenInject-Tools/payloads
 * [ ] Example Files
   * [x] AIO and Dependencies
   * [ ] Example payload
 * [ ] Optimize Loading Order
 * [ ] Debug Logging
 * [ ] Cleanup Imports and Code
+* [ ] Document Code
 * [ ] Test AIO scripts after injection
 
-## Features
-- Payload injection
-- Config
-  - 
-- Commands
-  - 
+## Config
 
-## How it works
 
-## Requirements
-Requires at least revision [azerothcore-wotlk@dba57a6](https://github.com/azerothcore/azerothcore-wotlk/commit/dba57a610776e1062c2677fe0dd4295a2b47f41c) of AzerothCore
+## Commands
 
 ## Installation
 ```

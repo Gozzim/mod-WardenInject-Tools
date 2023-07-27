@@ -14,7 +14,7 @@
   * [x] Inject functions to handle addon injection
   * [x] Inject configured payloads
 * [ ] Implement injection from file
-  * [x] File loading
+  * [x] File loading as payload
   * [ ] Load file from set ScriptPath or root depending on start of path string
   * [ ] Implement file reformatting for injection
     * [x] Remove leading spaces
@@ -22,7 +22,6 @@
     * [x] Remove empty lines
     * [x] Remove line breaks
     * [ ] Remove comments (still buggy)
-  * [x] File injection
 * [ ] Payload Management
   * [x] Injection to handle payloads
   * [x] Chunk large payloads into multiple packets
@@ -60,6 +59,7 @@
 * [ ] Cleanup Imports and Code
 * [ ] Document Code
 * [ ] Test AIO scripts after injection
+* [ ] Test saved vars
 
 ## Config
 

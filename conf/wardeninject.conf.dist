@@ -1,0 +1,100 @@
+#
+# Copyright (C) 2016+ AzerothCore <www.azerothcore.org>, released under GNU AGPL v3 license: https://github.com/azerothcore/azerothcore-wotlk/blob/master/LICENSE-AGPL3
+#
+
+[worldserver]
+
+########################################
+# WardenInject configuration
+########################################
+#
+#    WardenInject.Enable
+#        Description: Enable WardenInject-Tools
+#        Default:     1 - Enabled
+#                     0 - Disabled
+#
+
+WardenInject.Enable = 1
+
+#   WardenInject.Announce
+#        Description: Announce Module
+#        Default:     1 - (Enabled)
+#                     0 - (Disabled)
+
+WardenInject.Announce = 1
+
+#   WardenInject.ScriptsPath
+#        Description: Path to WardenInject-Tools scripts
+#                     If the path is left empty, "<SourceDirectory>/modules/mod-WardenInject-Tools/payloads" is used
+#                     <SourceDirectory> is defined in worldserver.conf
+#        Example:     "/home/wow/acore-server/warden_scripts"
+#        Default:     ""
+WardenInject.ScriptsPath = ""
+
+WardenInject.ClientCacheTable = "wi"
+
+WardenInject.OnLogin = 1
+
+WardenInject.Scripts.lualzw.Version = 1.0
+WardenInject.Scripts.lualzw.Compressed = 0
+WardenInject.Scripts.lualzw.Cached = 1
+WardenInject.Scripts.lualzw.OnLogin = 1
+WardenInject.Scripts.lualzw.Order = 0
+WardenInject.Scripts.lualzw.File = "lualzw.lua"
+WardenInject.Scripts.lualzw.SavedVars = ""
+
+WardenInject.Scripts.Smallfolk.Version = 1.0
+WardenInject.Scripts.Smallfolk.Compressed = 0
+WardenInject.Scripts.Smallfolk.Cached = 1
+WardenInject.Scripts.Smallfolk.OnLogin = 1
+WardenInject.Scripts.Smallfolk.Order = 1
+WardenInject.Scripts.Smallfolk.File = "Smallfolk.lua"
+WardenInject.Scripts.Smallfolk.SavedVars = ""
+
+WardenInject.Scripts.Queue.Version = 1.0
+WardenInject.Scripts.Queue.Compressed = 0
+WardenInject.Scripts.Queue.Cached = 1
+WardenInject.Scripts.Queue.OnLogin = 1
+WardenInject.Scripts.Queue.Order = 2
+WardenInject.Scripts.Queue.File = "Queue.lua"
+WardenInject.Scripts.Queue.SavedVars = ""
+
+WardenInject.Scripts.LibStub.Version = 1.0
+WardenInject.Scripts.LibStub.Compressed = 0
+WardenInject.Scripts.LibStub.Cached = 1
+WardenInject.Scripts.LibStub.OnLogin = 1
+WardenInject.Scripts.LibStub.Order = 3
+WardenInject.Scripts.LibStub.File = "LibStub.lua"
+WardenInject.Scripts.LibStub.SavedVars = ""
+
+WardenInject.Scripts.LibWindow.Version = 1.0
+WardenInject.Scripts.LibWindow.Compressed = 0
+WardenInject.Scripts.LibWindow.Cached = 1
+WardenInject.Scripts.LibWindow.OnLogin = 1
+WardenInject.Scripts.LibWindow.Order = 4
+WardenInject.Scripts.LibWindow.File = "LibWindow.lua"
+WardenInject.Scripts.LibWindow.SavedVars = ""
+
+WardenInject.Scripts.AIO.Version = 1.74
+WardenInject.Scripts.AIO.Compressed = 0
+WardenInject.Scripts.AIO.Cached = 1
+WardenInject.Scripts.AIO.OnLogin = 1
+WardenInject.Scripts.AIO.Order = 5
+WardenInject.Scripts.AIO.File = "AIO.lua"
+WardenInject.Scripts.AIO.SavedVars = "AIO_sv;AIO_sv_Addons"
+
+WardenInject.Scripts.Example.Version = 1.0
+WardenInject.Scripts.Example.Compressed = 0
+WardenInject.Scripts.Example.Cached = 1
+WardenInject.Scripts.Example.OnLogin = 1
+WardenInject.Scripts.Example.Order = 6
+WardenInject.Scripts.Example.File = "client_window.lua"
+WardenInject.Scripts.Example.SavedVars = ""
+
+WardenInject.Scripts.SavedVarTest.Version = 1.0
+WardenInject.Scripts.SavedVarTest.Compressed = 0
+WardenInject.Scripts.SavedVarTest.Cached = 1
+WardenInject.Scripts.SavedVarTest.OnLogin = 1
+WardenInject.Scripts.SavedVarTest.Order = 7
+WardenInject.Scripts.SavedVarTest.File = "persistent_variables.lua"
+WardenInject.Scripts.SavedVarTest.SavedVars = "PLAYER_STUFF"

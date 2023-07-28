@@ -18,6 +18,7 @@
 #ifndef _WARDENINJECTMGR_H_
 #define _WARDENINJECTMGR_H_
 
+#include "BuiltInConfig.h"
 #include "Common.h"
 #include "Chat.h"
 #include "Config.h"
@@ -29,36 +30,19 @@
 #include "WorldPacket.h"
 #include "WardenInjectData.h"
 
-#include <iostream>
-#include <fstream>
 #include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <regex>
 #include <unordered_map>
 #include <vector>
-#include <regex>
-
-/**
- * TODO:
- * [ ] Server sided Caching
- * [ ] Client sided Caching
- * [ ] Compression
- * [ ] Debug Logging
- * [ ] Cleanup Imports
- * [ ] Optimize Loading Order
- *
- * Config:
- * - To be injected on login
- * - Scripts Path
- * - cGTN
- * - dbg
- * - Verbose?
- * - Enable Force
- */
 
 #define MAX_PAYLOAD_SIZE 900
 #define dbg "true"
 // TODO: Add in config
 //const std::string cGTN = "wi";
 //const std::string dbg = "true";
+const std::string defaultScriptsPath = FilePath::concat(BuiltInConfig::GetSourceDirectory(), "/modules/mod-WardenInject-Tools/payloads");
 
 class WardenInjectData;
 

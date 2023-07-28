@@ -16,6 +16,8 @@
 * [ ] Implement injection from file
   * [x] File loading as payload
   * [ ] Load file from set ScriptPath or root depending on start of path string
+  * [ ] Add name for ScriptFiles in Data
+  * [ ] Add Path for ScriptFiles in Data
   * [ ] Implement file reformatting for injection
     * [x] Remove leading spaces
     * [x] Remove trailing spaces
@@ -35,11 +37,13 @@
   * [ ] Server-side
   * [ ] Client-side
 * [ ] Commands
-  * [x] Implement Command for code injection
-  * [x] Implement Command for file injection
-  * [x] Implement Command for preloaded Script injection
-  * [x] Implement various debugging commands
-  * [ ] Implement command to reload and notify players to relad UI
+  * [x] Command for code injection
+  * [x] Command for file injection
+  * [x] Command for preloaded Script injection
+  * [x] Various debugging commands
+  * [ ] Command to reload and notify players to relad UI
+  * [ ] Command to check available payloads in Store
+  * [ ] Command to check available payloads in `ScriptsPath`
   * [ ] DB query for commmands table
 * [ ] Implement config
   * [x] Config to enable addon injection initialization onLogin
@@ -57,6 +61,7 @@
 * [ ] Optimize Loading Order
 * [ ] Debug Logging
 * [ ] Cleanup Imports and Code
+* [ ] Move FileManagement Functions to WardenInjectFileMgr
 * [ ] Document Code
 * [ ] Test AIO scripts after injection
 * [ ] Test saved vars

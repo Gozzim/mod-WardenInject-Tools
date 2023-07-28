@@ -39,7 +39,10 @@ public:
 
     void OnLogin(Player* player) override
     {
-        sWardenInjectMgr->InitialInjection(player);
+        if (OnLoginInject)
+        {
+            sWardenInjectMgr->InitialInjection(player);
+        }
     }
 
     void OnBeforeSendChatMessage(Player* player, uint32& type, uint32& lang, std::string& msg) override

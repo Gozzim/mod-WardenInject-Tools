@@ -80,7 +80,7 @@ public:
 
     std::string LoadLuaFile(const std::filesystem::path& filePath);
     void ConvertToPayload(std::string& luaCode);
-    std::string GetPayloadFromFile(std::filesystem::path filePath);
+    std::string GetPayloadFromFile(std::filesystem::path& filePath);
 private:
     typedef std::map<std::string, WardenInjectData> WardenScriptsMap;
     WardenScriptsMap wardenScriptsMap;

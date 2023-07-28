@@ -193,9 +193,9 @@ public:
         return true;
     }
 
-    static bool HandleFileInjectCommand(ChatHandler* handler, Optional<PlayerIdentifier> player, Tail filePath)
+    static bool HandleFileInjectCommand(ChatHandler* handler, Optional<PlayerIdentifier> player, Tail filePathStr)
     {
-        if (filePath.empty())
+        if (filePathStr.empty())
         {
             return false;
         }
@@ -214,8 +214,8 @@ public:
             return false;
         }
 
-        std::string payload = sWardenInjectMgr->GetPayloadFromFile(std::string(filePath));
-        sWardenInjectMgr->ConvertToPayload(payload);
+        std::filesystem::path filePath(std::string{ filePathStr });
+        std::string payload = sWardenInjectMgr->GetPayloadFromFile(filePath);
         LOG_DEBUG("module", "WardenInjectCommands::HandleFileInjectCommand - Injecting payload '{}' into client of player {}.", sWardenInjectMgr->ReplaceCurlyBraces(payload), target->GetName());
         sWardenInjectMgr->SendLargePayload(target, "addonName", 1.0, true, false, payload);
 

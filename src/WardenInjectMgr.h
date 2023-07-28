@@ -31,6 +31,7 @@
 #include "WardenInjectData.h"
 
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <regex>
@@ -42,7 +43,6 @@
 // TODO: Add in config
 //const std::string cGTN = "wi";
 //const std::string dbg = "true";
-const std::string defaultScriptsPath = FilePath::concat(BuiltInConfig::GetSourceDirectory(), "/modules/mod-WardenInject-Tools/payloads");
 
 class WardenInjectData;
 
@@ -51,9 +51,11 @@ class WardenInjectMgr
 public:
     static WardenInjectMgr* instance();
 
+    const std::filesystem::path defaultScriptsPath = std::filesystem::path(BuiltInConfig::GetSourceDirectory()) / std::filesystem::path("modules/mod-WardenInject-Tools/payloads");
+
     bool WardenInjectEnabled;
     bool Announce;
-    std::string ScriptsPath;
+    std::filesystem::path ScriptsPath;
     bool OnLoginInject;
     std::string cGTN;
 
@@ -76,9 +78,9 @@ public:
 
     void LoadOnLoginScripts();
 
-    std::string LoadLuaFile(const std::string& filePath);
+    std::string LoadLuaFile(const std::filesystem::path& filePath);
     void ConvertToPayload(std::string& luaCode);
-    std::string GetPayloadFromFile(std::string filePath);
+    std::string GetPayloadFromFile(std::filesystem::path filePath);
 private:
     typedef std::map<std::string, WardenInjectData> WardenScriptsMap;
     WardenScriptsMap wardenScriptsMap;

@@ -29,22 +29,22 @@ void WardenInjectMgr::LoadConfig(/*bool reload*/)
     WardenInjectEnabled = sConfigMgr->GetOption<bool>("WardenInject.Enable", true);
     Announce = sConfigMgr->GetOption<bool>("WardenInject.Announce", true);
     cGTN = sConfigMgr->GetOption<std::string>("WardenInject.ClientCacheTable", "wi");
-    ScriptsPath = sConfigMgr->GetOption<std::string>("WardenInject.ScriptsPath", defaultScriptsPath);
+    ScriptsPath = std::filesystem::path(sConfigMgr->GetOption<std::string>("WardenInject.ScriptsPath", defaultScriptsPath));
     OnLoginInject = sConfigMgr->GetOption<bool>("WardenInject.OnLogin", true);
 
-    if (!FileSystem::exists(ScriptsPath))
+    if (!std::filesystem::exists(ScriptsPath))
     {
-        LOG_ERROR("module", "WardenInject Scripts Path: {} does not exist! Falling back to default.", ScriptsPath);
+        LOG_ERROR("module", "WardenInject Scripts Path: {} does not exist! Falling back to default.", ScriptsPath.string());
         ScriptsPath = defaultScriptsPath;
     }
 
-    if (!FileSystem::isDirectory(ScriptsPath))
+    if (!std::filesystem::is_directory(ScriptsPath))
     {
-        LOG_ERROR("module", "WardenInject Scripts Path: {} is not a directory! Falling back to default.", ScriptsPath);
+        LOG_ERROR("module", "WardenInject Scripts Path: {} is not a directory! Falling back to default.", ScriptsPath.string());
         ScriptsPath = defaultScriptsPath;
     }
 
-    LOG_DEBUG("module", "WardenInject Scripts Path: {}", ScriptsPath);
+    LOG_DEBUG("module", "WardenInject Scripts Path: {}", ScriptsPath.string());
 
     LoadOnLoginScripts();
 }
@@ -82,28 +82,12 @@ void WardenInjectMgr::LoadOnLoginScripts()
         }
         else if (scriptConfig == "File")
         {
-            std::string filePath = sConfigMgr->GetOption<std::string>(script, "");
+            std::filesystem::path filePath(sConfigMgr->GetOption<std::string>(script, ""));
 
-            std::string root;
-            Array<std::string> path;
-            std::string base;
-            std::string ext;
-
-            FileSystem::parse(filePath, root, path, base, ext);
-
-            LOG_DEBUG("module", "WardenInject: root: {}", root);
-
-            if (!FilePath::isRoot(root))
+            if (!filePath.is_absolute())
             {
-                filePath = FilePath::concat(ScriptsPath, filePath);
+                filePath = ScriptsPath / filePath;
             }
-
-            /*
-            // ToDo: Add check for Windows
-            if (filePath.rfind("/", 0) != 0) {
-                filePath = FilePath::concat(ScriptsPath, filePath);
-            }
-            */
 
             std::string payload = GetPayloadFromFile(filePath);
             wardenScriptsMap[scriptName].SetPayload(payload);
@@ -188,19 +172,14 @@ void WardenInjectMgr::SendAddonMessage(const std::string& prefix, const std::str
 }
 
 // Loads the contents of a Lua file into a string variable
-std::string WardenInjectMgr::LoadLuaFile(const std::string& filePath)
+std::string WardenInjectMgr::LoadLuaFile(const std::filesystem::path& filePath)
 {
-    if (FilePath::ext(filePath) != "lua")
+    if (filePath.extension() != "lua")
     {
-        LOG_INFO("module", "WardenInject::LoadLuaFile - File '{}' does not have 'lua' extension. Loading anyway.", filePath);
+        LOG_INFO("module", "WardenInject::LoadLuaFile - File '{}' does not have 'lua' extension. Loading anyway.", filePath.string());
     }
 
     std::string luaCode;
-
-    // ToDo: Do i need that?
-#ifdef WIN32
-    std::replace(filename.begin(), filename.end(), '/', '\\');
-#endif
 
     // ToDo: Catch exceptions due to different reasons - file not found, permissions error, etc.
     std::ifstream file(filePath);
@@ -212,14 +191,14 @@ std::string WardenInjectMgr::LoadLuaFile(const std::string& filePath)
     }
     else
     {
-        LOG_ERROR("module", "WardenInjectMgr::LoadLuaFile - Loading file '{}' failed.", filePath);
+        LOG_ERROR("module", "WardenInjectMgr::LoadLuaFile - Loading file '{}' failed.", filePath.string());
     }
 
     file.close();
 
     if (luaCode.empty())
     {
-        LOG_WARN("module", "WardenInjectMgr::LoadLuaFile - File '{}' is empty.", filePath);
+        LOG_WARN("module", "WardenInjectMgr::LoadLuaFile - File '{}' is empty.", filePath.string());
     }
 
     return luaCode;
@@ -258,31 +237,31 @@ void WardenInjectMgr::ConvertToPayload(std::string& luaCode)
     Acore::String::Trim(luaCode);
 }
 
-std::string WardenInjectMgr::GetPayloadFromFile(std::string filePath)
+std::string WardenInjectMgr::GetPayloadFromFile(std::filesystem::path filePath)
 {
-    if (!FileSystem::exists(filePath))
+    if (!std::filesystem::exists(filePath))
     {
-        LOG_ERROR("module", "WardenInject::GetPayloadFromFile - File '{}' does not exist.", filePath);
+        LOG_ERROR("module", "WardenInject::GetPayloadFromFile - File '{}' does not exist.", filePath.string());
         return "";
     }
 
-    if (!FileSystem::isFile(filePath))
+    if (!std::filesystem::is_regular_file(filePath))
     {
-        LOG_ERROR("module", "WardenInject::GetPayloadFromFile - File '{}' is not a file.", filePath);
+        LOG_ERROR("module", "WardenInject::GetPayloadFromFile - File '{}' is not a file.", filePath.string());
         return "";
     }
 
     std::string luaCode = LoadLuaFile(filePath);
     if (luaCode.empty())
     {
-        LOG_WARN("module", "WardenInjectMgr::GetPayloadFromFile - Code from file {} is empty.", filePath);
+        LOG_WARN("module", "WardenInjectMgr::GetPayloadFromFile - Code from file {} is empty.", filePath.string());
         return luaCode;
     }
 
     ConvertToPayload(luaCode);
     if (luaCode.empty())
     {
-        LOG_WARN("module", "WardenInjectMgr::GetPayloadFromFile - Code from file {} is empty after removing whitespaces.", filePath);
+        LOG_WARN("module", "WardenInjectMgr::GetPayloadFromFile - Code from file {} is empty after removing whitespaces.", filePath.string());
     }
 
     return luaCode;

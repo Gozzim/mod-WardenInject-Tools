@@ -39,7 +39,7 @@ public:
 
     void OnLogin(Player* player) override
     {
-        if (OnLoginInject)
+        if (sWardenInjectMgr->OnLoginInject)
         {
             sWardenInjectMgr->InitialInjection(player);
         }

@@ -15,7 +15,7 @@
   * [x] Inject configured payloads
 * [ ] Implement injection from file
   * [x] File loading as payload
-  * [ ] Load file from set ScriptPath or root depending on start of path string
+  * [x] Load file from set ScriptPath or root depending on start of path string
   * [ ] Add name for ScriptFiles in Data
   * [ ] Add Path for ScriptFiles in Data
   * [ ] Implement file reformatting for injection
@@ -54,17 +54,19 @@
   * [ ] Config for verbose output
   * [ ] Debug client-side
   * [ ] Prefix for addon injection
-  * [ ] Default path script to {source}/modules/mod-WardenInject-Tools/payloads
-* [ ] Example Files
+  * [x] Default path script to {source}/modules/mod-WardenInject-Tools/payloads
+* [x] Example Files
   * [x] AIO and Dependencies
-  * [ ] Example payload
+  * [x] Example payload
 * [ ] Optimize Loading Order
 * [ ] Debug Logging
 * [ ] Cleanup Imports and Code
 * [ ] Move FileManagement Functions to WardenInjectFileMgr
 * [ ] Document Code
-* [ ] Test AIO scripts after injection
-* [ ] Test saved vars
+
+Known Bugs:
+* `Saved Variables` do not work as intended
+* Eluna Scripts are not executed or even received after Client AIO was injected
 
 ## Config
 

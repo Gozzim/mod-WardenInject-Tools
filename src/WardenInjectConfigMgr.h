@@ -1,7 +1,6 @@
 /*
  * This file was written for the AzerothCore Project.
  * Code and Implementation: Gozzim (https://github.com/Gozzim/mod-WardenInject-Tools)
- * Proof of Concept: Foereaper (https://github.com/Foereaper/WardenInject)
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Affero General Public License as published by the

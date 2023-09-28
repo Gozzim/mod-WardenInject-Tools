@@ -23,6 +23,7 @@
 #include "Common.h"
 #include "Chat.h"
 #include "Log.h"
+#include "LZW.h"
 #include "Player.h"
 #include "SocialMgr.h"
 #include "WardenInjectConfigMgr.h"
@@ -32,9 +33,9 @@
 #include "World.h"
 #include "WorldPacket.h"
 
-//#include <algorithm>
 #include <filesystem>
-//#include <iostream>
+#include <iostream>
+#include <map>
 #include <vector>
 
 #define MAX_PAYLOAD_SIZE 900

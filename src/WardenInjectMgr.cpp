@@ -110,23 +110,28 @@ WardenPayloadMgr* GetWardenPayloadMgr(WorldSession* session)
 
 void WardenInjectMgr::SendLargePayload(Player* player, const std::string& addon, float version, bool cache, bool comp, const std::string& data)
 {
-    std::vector <uint8> compressedBytes;
-    /* TODO
+    std::string payloadData = data; //TODO: better solution?
+    std::string compressedData;
+    // TODO: Test This
     if (comp == 1)
     {
-        compressedBytes = compress(data);
-        if (compressedBytes.empty())
+        compressedData = sLZW->Compress(payloadData);
+        if (compressedData.empty())
+        {
+            payloadData = compressedData;
+        }
+        else
         {
             comp = 0;
         }
     }
-    */
-    const uint32 maxChunkSize = 900;
+
+    const uint32 maxChunkSize = MAX_PAYLOAD_SIZE;
     std::vector<std::string> chunks;
 
-    for (uint32 i = 0; i < data.length(); i += maxChunkSize)
+    for (uint32 i = 0; i < payloadData.length(); i += maxChunkSize)
     {
-        chunks.push_back(data.substr(i, maxChunkSize));
+        chunks.push_back(payloadData.substr(i, maxChunkSize));
     }
 
     if (chunks.size() > 99)
@@ -149,11 +154,6 @@ void WardenInjectMgr::SendLargePayload(Player* player, const std::string& addon,
         }
 
         std::string payload = Acore::StringFormatFmt("_G['{}'].f.p('{}', '{}', '{}', {}, {}, {}, [[{}]]);", sWardenInjectConfigMgr->cGTN, chunkNumStr, payloadSizeStr, addon, version, cache, comp, chunks[i].c_str());
-
-        if (comp)
-        {
-            std::string payload = Acore::StringFormatFmt("_G['{}'].f.p('{}', '{}', '{}', {}, {}, {}, [[{}]]);", sWardenInjectConfigMgr->cGTN, chunkNumStr, payloadSizeStr, addon, version, cache, comp, std::string(compressedBytes.begin(), compressedBytes.end()));
-        }
 
         SendAddonMessage("ws", payload, CHAT_MSG_WHISPER, player);
     }

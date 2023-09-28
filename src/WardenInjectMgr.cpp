@@ -1,5 +1,7 @@
 /*
- * This file is part of the AzerothCore Project. See AUTHORS file for Copyright information
+ * This file was written for the AzerothCore Project.
+ * Code and Implementation: Gozzim (https://github.com/Gozzim/mod-WardenInject-Tools)
+ * Proof of Concept: Foereaper (https://github.com/Foereaper/WardenInject)
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Affero General Public License as published by the
@@ -22,90 +24,6 @@ WardenInjectMgr* WardenInjectMgr::instance()
 {
     static WardenInjectMgr instance;
     return &instance;
-}
-
-void WardenInjectMgr::LoadConfig(/*bool reload*/)
-{
-    WardenInjectEnabled = sConfigMgr->GetOption<bool>("WardenInject.Enable", true);
-    Announce = sConfigMgr->GetOption<bool>("WardenInject.Announce", true);
-    cGTN = sConfigMgr->GetOption<std::string>("WardenInject.ClientCacheTable", "wi");
-    OnLoginInject = sConfigMgr->GetOption<bool>("WardenInject.OnLogin", true);
-    ScriptsPath = std::filesystem::path(sConfigMgr->GetOption<std::string>("WardenInject.ScriptsPath", defaultScriptsPath));
-
-    if (ScriptsPath.empty())
-    {
-        ScriptsPath = defaultScriptsPath;
-    }
-
-    if (!std::filesystem::exists(ScriptsPath))
-    {
-        LOG_ERROR("module", "WardenInject: ScriptsPath '{}' does not exist! Falling back to default.", ScriptsPath.string());
-        ScriptsPath = defaultScriptsPath;
-    }
-
-    if (!std::filesystem::is_directory(ScriptsPath))
-    {
-        LOG_ERROR("module", "WardenInject: ScriptsPath '{}' is not a directory! Falling back to default.", ScriptsPath.string());
-        ScriptsPath = defaultScriptsPath;
-    }
-
-    LoadOnLoginScripts();
-}
-
-void WardenInjectMgr::LoadOnLoginScripts()
-{
-    //bool changed = false;
-
-    std::vector<std::string> scripts = sConfigMgr->GetKeysByString("WardenInject.Scripts.");
-    for (std::string const& script : scripts)
-    {
-        std::string configName = script.substr(strlen("WardenInject.Scripts."));
-        std::string scriptName = configName.substr(0, configName.find("."));
-        std::string scriptConfig = configName.substr(configName.find(".") + 1);
-
-        if (scriptConfig == "Version")
-        {
-            wardenScriptsMap[scriptName].SetVersion(sConfigMgr->GetOption<float>(script, 1.0));
-        }
-        else if (scriptConfig == "Compressed")
-        {
-            wardenScriptsMap[scriptName].SetCompressed(sConfigMgr->GetOption<bool>(script, false));
-        }
-        else if (scriptConfig == "Cached")
-        {
-            wardenScriptsMap[scriptName].SetCached(sConfigMgr->GetOption<bool>(script, true));
-        }
-        else if (scriptConfig == "OnLogin")
-        {
-            wardenScriptsMap[scriptName].SetOnLogin(sConfigMgr->GetOption<bool>(script, true));
-        }
-        else if (scriptConfig == "Order")
-        {
-            wardenScriptsMap[scriptName].SetOrderNum(sConfigMgr->GetOption<uint16>(script, 0));
-        }
-        else if (scriptConfig == "File")
-        {
-            std::filesystem::path filePath(sConfigMgr->GetOption<std::string>(script, ""));
-
-            std::string payload = GetPayloadFromFile(filePath);
-            wardenScriptsMap[scriptName].SetPayload(payload);
-        }
-        else if (scriptConfig == "SavedVars")
-        {
-            std::istringstream savedVars(sConfigMgr->GetOption<std::string>(script, ""));
-            std::string var;
-            while (std::getline(savedVars, var, ';'))
-            {
-                wardenScriptsMap[scriptName].AddSavedVar(var);
-            }
-        }
-        else
-        {
-            LOG_WARN("module", "WardenInject: Unknown config {}", configName);
-        }
-    }
-
-    // ToDo: Send reload message to all players
 }
 
 std::string WardenInjectMgr::ReplaceEmptyCurlyBraces(std::string& str) {
@@ -169,107 +87,6 @@ void WardenInjectMgr::SendAddonMessage(const std::string& prefix, const std::str
     player->SendDirectMessage(&payloadPacket);
 }
 
-// Loads the contents of a Lua file into a string variable
-std::string WardenInjectMgr::LoadLuaFile(const std::filesystem::path& filePath)
-{
-    if (filePath.extension() != ".lua")
-    {
-        LOG_INFO("module", "WardenInject::LoadLuaFile - File '{}' does not have 'lua' extension. Loading anyway.", filePath.string());
-    }
-
-    std::string luaCode;
-
-    // ToDo: Catch exceptions due to different reasons - file not found, permissions error, etc.
-    std::ifstream file(filePath);
-    if (file.is_open())
-    {
-        std::stringstream buffer;
-        buffer << file.rdbuf();
-        luaCode = buffer.str();
-    }
-    else
-    {
-        LOG_ERROR("module", "WardenInjectMgr::LoadLuaFile - Loading file '{}' failed.", filePath.string());
-    }
-
-    file.close();
-
-    if (luaCode.empty())
-    {
-        LOG_WARN("module", "WardenInjectMgr::LoadLuaFile - File '{}' is empty.", filePath.string());
-    }
-
-    return luaCode;
-}
-
-// Converts the Lua code into a payload that can be sent to the client
-// This is done by removing comments, line breaks and whitespaces
-// Also replaces " with ' to avoid issues with the client
-// It is not perfect but does the job
-void WardenInjectMgr::ConvertToPayload(std::string& luaCode)
-{
-    // Replace " with '
-    std::replace(luaCode.begin(), luaCode.end(), '"', '\'');
-
-    // Remove comment blocks
-    std::regex commentBlockRegex("--\\[=?\\[[\\s\\S]*?\\]=?\\]");
-    luaCode = std::regex_replace(luaCode, commentBlockRegex, "");
-
-    // Remove comments
-    std::regex commentRegex("--.*\r?\n");
-    luaCode = std::regex_replace(luaCode, commentRegex, "\n");
-
-    // Remove leading tabs and whitespaces
-    std::regex leadingSpaceRegex("\r?\n[ \t]+", std::regex_constants::optimize);
-    luaCode = std::regex_replace(luaCode, leadingSpaceRegex, "\n");
-
-    // Remove empty lines
-    std::regex emptyLineRegex("\r?\n[ \t]*\r?\n", std::regex_constants::optimize);
-    luaCode = std::regex_replace(luaCode, emptyLineRegex, "\n");
-
-    // Replace line breaks with spaces
-    std::regex lineBreakRegex("\r?\n");
-    luaCode = std::regex_replace(luaCode, lineBreakRegex, " ");
-
-    // Trim whitespace from the beginning and end of the string
-    Acore::String::Trim(luaCode);
-}
-
-std::string WardenInjectMgr::GetPayloadFromFile(std::filesystem::path& filePath)
-{
-    if (!filePath.is_absolute())
-    {
-        filePath = ScriptsPath / filePath;
-    }
-
-    if (!std::filesystem::exists(filePath))
-    {
-        LOG_ERROR("module", "WardenInject::GetPayloadFromFile - File '{}' does not exist.", filePath.string());
-        return "";
-    }
-
-    if (!std::filesystem::is_regular_file(filePath))
-    {
-        LOG_ERROR("module", "WardenInject::GetPayloadFromFile - File '{}' is not a file.", filePath.string());
-        return "";
-    }
-
-    std::string luaCode = LoadLuaFile(filePath);
-    if (luaCode.empty())
-    {
-        LOG_WARN("module", "WardenInjectMgr::GetPayloadFromFile - Code from file {} is empty.", filePath.string());
-        return luaCode;
-    }
-
-    ConvertToPayload(luaCode);
-    if (luaCode.empty())
-    {
-        LOG_WARN("module", "WardenInjectMgr::GetPayloadFromFile - Code from file {} is empty after removing whitespaces.", filePath.string());
-    }
-
-    return luaCode;
-}
-
 WardenPayloadMgr* GetWardenPayloadMgr(WorldSession* session)
 {
     if (!session)
@@ -331,11 +148,11 @@ void WardenInjectMgr::SendLargePayload(Player* player, const std::string& addon,
             chunkNumStr = "0" + chunkNumStr;
         }
 
-        std::string payload = Acore::StringFormatFmt("_G['{}'].f.p('{}', '{}', '{}', {}, {}, {}, [[{}]]);", cGTN, chunkNumStr, payloadSizeStr, addon, version, cache, comp, chunks[i].c_str());
+        std::string payload = Acore::StringFormatFmt("_G['{}'].f.p('{}', '{}', '{}', {}, {}, {}, [[{}]]);", sWardenInjectConfigMgr->cGTN, chunkNumStr, payloadSizeStr, addon, version, cache, comp, chunks[i].c_str());
 
         if (comp)
         {
-            std::string payload = Acore::StringFormatFmt("_G['{}'].f.p('{}', '{}', '{}', {}, {}, {}, [[{}]]);", cGTN, chunkNumStr, payloadSizeStr, addon, version, cache, comp, std::string(compressedBytes.begin(), compressedBytes.end()));
+            std::string payload = Acore::StringFormatFmt("_G['{}'].f.p('{}', '{}', '{}', {}, {}, {}, [[{}]]);", sWardenInjectConfigMgr->cGTN, chunkNumStr, payloadSizeStr, addon, version, cache, comp, std::string(compressedBytes.begin(), compressedBytes.end()));
         }
 
         SendAddonMessage("ws", payload, CHAT_MSG_WHISPER, player);
@@ -344,9 +161,9 @@ void WardenInjectMgr::SendLargePayload(Player* player, const std::string& addon,
 
 void WardenInjectMgr::SendPayloadInform(Player* player)
 {
-    for (uint16 i = 0; i < wardenScriptsMap.size(); i++)
+    for (uint16 i = 0; i < sWardenInjectConfigMgr->GetWardenScriptsMap().size(); i++)
     {
-        for (auto& [payloadName, data] : wardenScriptsMap) {
+        for (auto& [payloadName, data] : sWardenInjectConfigMgr->GetWardenScriptsMap()) {
             if (data.GetOrderNum() != i) {
                 continue;
             }
@@ -356,11 +173,11 @@ void WardenInjectMgr::SendPayloadInform(Player* player)
             }
             // register all saved variables if there are any
             for (const auto& var : data.GetSavedVars()) {
-                SendAddonMessage("ws", "_G['" + cGTN + "'].f.r('" + var + "')", CHAT_MSG_WHISPER, player);
+                SendAddonMessage("ws", "_G['" + sWardenInjectConfigMgr->cGTN + "'].f.r('" + var + "')", CHAT_MSG_WHISPER, player);
             }
 
             LOG_DEBUG("module", "Sending payload: {} with orderNumber {}", payloadName, data.GetOrderNum());
-            std::string message = Acore::StringFormatFmt("_G['{}'].f.i('{}', {}, {}, {}, {})", cGTN, payloadName, data.GetVersion(), data.IsCached(), data.IsCompressed(), data.GetOrderNum());
+            std::string message = Acore::StringFormatFmt("_G['{}'].f.i('{}', {}, {}, {}, {})", sWardenInjectConfigMgr->cGTN, payloadName, data.GetVersion(), data.IsCached(), data.IsCompressed(), data.GetOrderNum());
             SendAddonMessage("ws", message, CHAT_MSG_WHISPER, player);
         }
     }
@@ -368,20 +185,21 @@ void WardenInjectMgr::SendPayloadInform(Player* player)
 
 void WardenInjectMgr::SendSpecificPayload(Player* player, std::string payloadName)
 {
-    WardenInjectData& data = wardenScriptsMap[payloadName];
-    if (wardenScriptsMap.find(payloadName) == wardenScriptsMap.end())
+    if (!sWardenInjectConfigMgr->WardenScriptLoaded(payloadName))
     {
         LOG_ERROR("module", "Specific Payload not found: {}", payloadName);
         return;
     }
 
+    WardenInjectData& data = sWardenInjectConfigMgr->GetWardenScript(payloadName);
+
     // register all saved variables if there are any
     for (const auto& var : data.GetSavedVars()) {
-        SendAddonMessage("ws", "_G['" + cGTN + "'].f.r('" + var + "')", CHAT_MSG_WHISPER, player);
+        SendAddonMessage("ws", "_G['" + sWardenInjectConfigMgr->cGTN + "'].f.r('" + var + "')", CHAT_MSG_WHISPER, player);
     }
 
     LOG_DEBUG("module", "Sending specific payload: {} with orderNumber {}", payloadName, data.GetOrderNum());
-    std::string message = Acore::StringFormatFmt("_G['{}'].f.i('{}', {}, {}, {}, {})", cGTN, payloadName, data.GetVersion(), data.IsCached(), data.IsCompressed(), data.GetOrderNum());
+    std::string message = Acore::StringFormatFmt("_G['{}'].f.i('{}', {}, {}, {}, {})", sWardenInjectConfigMgr->cGTN, payloadName, data.GetVersion(), data.IsCached(), data.IsCompressed(), data.GetOrderNum());
     SendAddonMessage("ws", message, CHAT_MSG_WHISPER, player);
 }
 
@@ -392,20 +210,20 @@ void WardenInjectMgr::SendAddonInjector(Player* player)
     SendAddonMessage("ws", "SlashCmdList['RELOAD'] = function() _G['ReloadUI']() end", CHAT_MSG_WHISPER, player);
 
     // Generate helper functions to load larger datasets
-    SendAddonMessage("ws", "_G['" + cGTN + "'] = { f = {}, s = {}, i = {0}, d = " + dbg + "};", CHAT_MSG_WHISPER, player);
+    SendAddonMessage("ws", "_G['" + sWardenInjectConfigMgr->cGTN + "'] = { f = {}, s = {}, i = {0}, d = " + dbg + "};", CHAT_MSG_WHISPER, player);
     // Load
-    SendAddonMessage("ws", "_G['" + cGTN + "'].f.l = function(s, n) local t=_G['" + cGTN + "'].i; forceinsecure(); loadstring(s)(); if(t.d) then print('[WardenLoader]: '..n..' loaded!') end t[1] = t[1]+1; if(t[1] == t[2]) then SendAddonMessage('wc', 'kill', 'WHISPER', UnitName('player')) end end", CHAT_MSG_WHISPER, player);
+    SendAddonMessage("ws", "_G['" + sWardenInjectConfigMgr->cGTN + "'].f.l = function(s, n) local t=_G['" + sWardenInjectConfigMgr->cGTN + "'].i; forceinsecure(); loadstring(s)(); if(t.d) then print('[WardenLoader]: '..n..' loaded!') end t[1] = t[1]+1; if(t[1] == t[2]) then SendAddonMessage('wc', 'kill', 'WHISPER', UnitName('player')) end end", CHAT_MSG_WHISPER, player);
     // Concatenate
-    SendAddonMessage("ws", "_G['" + cGTN + "'].f.c = function(a) local b='' for _,d in ipairs(a) do b=b..d end; return b end", CHAT_MSG_WHISPER, player);
+    SendAddonMessage("ws", "_G['" + sWardenInjectConfigMgr->cGTN + "'].f.c = function(a) local b='' for _,d in ipairs(a) do b=b..d end; return b end", CHAT_MSG_WHISPER, player);
     // Execute
-    SendAddonMessage("ws", "_G['" + cGTN + "'].f.e = function(n) local t=_G['" + cGTN + "']; local lt = t.s[n] local fn = t.f.c(lt.ca); _G[n..'payload'] = {v = lt.v, p = fn}; if(lt.co==1) then fn = lualzw.decompress(fn) end t.f.l(fn, n) t.s[n]=nil end", CHAT_MSG_WHISPER, player);
+    SendAddonMessage("ws", "_G['" + sWardenInjectConfigMgr->cGTN + "'].f.e = function(n) local t=_G['" + sWardenInjectConfigMgr->cGTN + "']; local lt = t.s[n] local fn = t.f.c(lt.ca); _G[n..'payload'] = {v = lt.v, p = fn}; if(lt.co==1) then fn = lualzw.decompress(fn) end t.f.l(fn, n) t.s[n]=nil end", CHAT_MSG_WHISPER, player);
     // Process
-    SendAddonMessage("ws", "_G['" + cGTN + "'].f.p = function(a, b, n, v, c, co, s) local t,tc=_G['" + cGTN + "'], _G['" + cGTN + "'].s; if not tc[n] then tc[n] = {['v']=v, ['co']=co, ['c']=c, ['ca']={}} end local lt = tc[n] a=tonumber(a) b=tonumber(b) table.insert(lt.ca, a, s) if a == b and #lt.ca == b then t.f.e(n) end end", CHAT_MSG_WHISPER, player);
+    SendAddonMessage("ws", "_G['" + sWardenInjectConfigMgr->cGTN + "'].f.p = function(a, b, n, v, c, co, s) local t,tc=_G['" + sWardenInjectConfigMgr->cGTN + "'], _G['" + sWardenInjectConfigMgr->cGTN + "'].s; if not tc[n] then tc[n] = {['v']=v, ['co']=co, ['c']=c, ['ca']={}} end local lt = tc[n] a=tonumber(a) b=tonumber(b) table.insert(lt.ca, a, s) if a == b and #lt.ca == b then t.f.e(n) end end", CHAT_MSG_WHISPER, player);
     // Inform
     // One potential issue is dependency load order and requirement, this is something I'll have to look into at some point..
-    SendAddonMessage("ws", "_G['" + cGTN + "'].f.i = function(n, v, c, co, s) local t=_G['" + cGTN + "']; if not(t.i[2]) then t.i[2] = tonumber(s) end if(c == 1) then RegisterForSave(n..'payload'); local cc = _G[n..'payload'] if(cc) then if(cc.v == v) then local p = cc.p if(co == 1) then p = lualzw.decompress(p) end t.f.l(p, n) return; end end end SendAddonMessage('wc', 'req'..n, 'WHISPER', UnitName('player')) end", CHAT_MSG_WHISPER, player);
+    SendAddonMessage("ws", "_G['" + sWardenInjectConfigMgr->cGTN + "'].f.i = function(n, v, c, co, s) local t=_G['" + sWardenInjectConfigMgr->cGTN + "']; if not(t.i[2]) then t.i[2] = tonumber(s) end if(c == 1) then RegisterForSave(n..'payload'); local cc = _G[n..'payload'] if(cc) then if(cc.v == v) then local p = cc.p if(co == 1) then p = lualzw.decompress(p) end t.f.l(p, n) return; end end end SendAddonMessage('wc', 'req'..n, 'WHISPER', UnitName('player')) end", CHAT_MSG_WHISPER, player);
     // cache registry
-    SendAddonMessage("ws", "_G['" + cGTN + "'].f.r = function(a) RegisterForSave(a); end", CHAT_MSG_WHISPER, player);
+    SendAddonMessage("ws", "_G['" + sWardenInjectConfigMgr->cGTN + "'].f.r = function(a) RegisterForSave(a); end", CHAT_MSG_WHISPER, player);
 
     // Sends an inform to the player about the available payloads
     SendPayloadInform(player);
@@ -414,7 +232,7 @@ void WardenInjectMgr::SendAddonInjector(Player* player)
 void WardenInjectMgr::PushInitModule(Player* player)
 {
     SendAddonInjector(player);
-    SendAddonMessage("ws", "SendAddonMessage('wc', 'loaded', 'WHISPER', UnitName('player')); if(_G['" + cGTN + "'].d) then print('[WardenLoader]: Injection successful.') end", CHAT_MSG_WHISPER, player);
+    SendAddonMessage("ws", "SendAddonMessage('wc', 'loaded', 'WHISPER', UnitName('player')); if(_G['" + sWardenInjectConfigMgr->cGTN + "'].d) then print('[WardenLoader]: Injection successful.') end", CHAT_MSG_WHISPER, player);
 }
 
 void WardenInjectMgr::InitialInjection(Player* player)
@@ -514,13 +332,14 @@ void WardenInjectMgr::OnAddonMessageReceived(Player* player, uint32 type, const 
         std::string addon = data.substr(3);
         LOG_DEBUG("module", "WardenInjectMgr::OnAddonMessageReceived - Received request for addon {} from player {}.", addon, player->GetName());
 
-        if(wardenScriptsMap.find(addon) == wardenScriptsMap.end())
+        if (!sWardenInjectConfigMgr->WardenScriptLoaded(addon))
         {
             LOG_ERROR("module", "Requested Payload not found: {}", addon);
             return;
         }
 
-        WardenInjectData& data = wardenScriptsMap[addon];
+        WardenInjectData& data = sWardenInjectConfigMgr->GetWardenScript(addon);
         SendLargePayload(player, addon, data.GetVersion(), data.IsCached(), data.IsCompressed(), data.GetPayload());
     }
 }
+

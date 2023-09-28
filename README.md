@@ -65,7 +65,7 @@ Requires at least revision [azerothcore-wotlk@67bbeb7](https://github.com/azerot
 * [ ] Optimize Loading Order
 * [ ] Debug Logging
 * [ ] Cleanup Imports and Code
-* [ ] Move FileManagement Functions to WardenInjectFileMgr
+* [x] Move FileManagement Functions to WardenInjectFileMgr
 * [ ] Document Code
 
 Known Bugs:

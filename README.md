@@ -32,6 +32,8 @@ Requires at least revision [azerothcore-wotlk@67bbeb7](https://github.com/azerot
   * [x] Injection to handle payloads
   * [x] Chunk large payloads into multiple packets
   * [ ] Compression
+    * [x] LZW Implementation
+    * [ ] Adjustment for WardenInjection
   * [x] Payload Storage
 * [x] Event Handling
   * [x] OnLogin: Initialize Injection
@@ -86,6 +88,7 @@ Known Bugs:
 ## Credits
 - Module for AzerothCore created by [Gozzim](https://github.com/Gozzim)
 - Based on [WardernInject](https://github.com/Foereaper/WardenInject) by [Foereaper](https://github.com/Foereaper)
+- [LZW Algorithm](https://github.com/Rochet2/lualzw) by [Rochet2](https://github.com/Rochet2)
 - AzerothCore: [repository](https://github.com/azerothcore) - [website](http://azerothcore.org/)
 
 ## License

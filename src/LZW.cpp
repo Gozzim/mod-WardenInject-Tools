@@ -1,6 +1,7 @@
 /*
  * This file was written for the AzerothCore Project.
  * Code and Implementation: Gozzim (https://github.com/Gozzim/mod-WardenInject-Tools)
+ * LZW algorithm: Rochet2 (https://github.com/Rochet2/lualzw)
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Affero General Public License as published by the
@@ -49,6 +50,8 @@ void LZW::InitializeDictionaries()
 
 LZWDictResult LZW::DictAddA(const std::string& str, const LZWDictionary& dict, uint16 a, uint16 b)
 {
+    LZWDictionary updatedDict = dict;
+
     if (a >= 256)
     {
         a = 0;
@@ -56,11 +59,32 @@ LZWDictResult LZW::DictAddA(const std::string& str, const LZWDictionary& dict, u
         if (b >= 256)
         {
             b = 1;
+            updatedDict.clear();
         }
     }
 
-    LZWDictionary updatedDict = dict;
     updatedDict[str] = CharToString(static_cast<char>(a)) + CharToString(static_cast<char>(b));
+    a += 1;
+
+    return std::make_tuple(updatedDict, a, b);
+}
+
+LZWDictResult LZW::DictAddB(const std::string& str, const LZWDictionary& dict, uint16 a, uint16 b)
+{
+    LZWDictionary updatedDict = dict;
+
+    if (a >= 256)
+    {
+        a = 0;
+        b += 1;
+        if (b >= 256)
+        {
+            b = 1;
+            updatedDict.clear();
+        }
+    }
+
+    updatedDict[CharToString(static_cast<char>(a)) + CharToString(static_cast<char>(b))] = str;
     a += 1;
 
     return std::make_tuple(updatedDict, a, b);
@@ -106,7 +130,7 @@ std::string LZW::Compress(const std::string& input)
                 return "u" + input;
             }
 
-            auto dictResult = DictAddA(wc, dict, a, b);
+            LZWDictResult dictResult = DictAddA(wc, dict, a, b);
             dict = std::get<0>(dictResult);
             a = std::get<1>(dictResult);
             b = std::get<2>(dictResult);
@@ -126,6 +150,76 @@ std::string LZW::Compress(const std::string& input)
     if (len <= resultLen)
     {
         return "u" + input;
+    }
+
+    return result;
+}
+
+std::string LZW::Decompress(const std::string& input)
+{
+    if (input.empty())
+    {
+        return "invalid input - not a compressed string";
+    }
+
+    char control = input[0];
+    if (control == 'u')
+    {
+        return input.substr(1);
+    }
+    else if (control != 'c')
+    {
+        return "invalid input - not a compressed string";
+    }
+
+    std::string data = input.substr(1);
+    uint16 len = data.size();
+    if (len < 2)
+    {
+        return "invalid input - not a compressed string";
+    }
+
+    LZWDictionary dict;
+    uint16 a = 0;
+    uint16 b = 1;
+    std::string result;
+    uint16 n = 0;
+    std::string last = data.substr(0, 2);
+
+    result = (basedictdecompress.find(last) != basedictdecompress.end()) ? basedictdecompress[last] : dict[last];
+    n +=1;
+
+    for (uint16 i = 2; i < len; i += 2)
+    {
+        std::string code = data.substr(i, 2);
+        std::string lastStr = (basedictdecompress.find(last) != basedictdecompress.end()) ? basedictdecompress[last] : dict[last];
+
+        if (lastStr.empty())
+        {
+            return "could not find last from dict. Invalid input?";
+        }
+
+        std::string toAdd = (basedictdecompress.find(code) != basedictdecompress.end()) ? basedictdecompress[code] : dict[code];
+
+        if (!toAdd.empty())
+        {
+            result += toAdd;
+            LZWDictResult dictResult = DictAddB(lastStr + toAdd[0], dict, a, b);
+            dict = std::get<0>(dictResult);
+            a = std::get<1>(dictResult);
+            b = std::get<2>(dictResult);
+        }
+        else
+        {
+            std::string tmp = lastStr + lastStr[0];
+            result += tmp;
+            LZWDictResult dictResult = DictAddB(tmp, dict, a, b);
+            dict = std::get<0>(dictResult);
+            a = std::get<1>(dictResult);
+            b = std::get<2>(dictResult);
+        }
+
+        last = code;
     }
 
     return result;

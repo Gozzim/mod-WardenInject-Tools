@@ -48,10 +48,8 @@ void LZW::InitializeDictionaries()
     }
 }
 
-LZWDictResult LZW::DictAddA(const std::string& str, const LZWDictionary& dict, uint16 a, uint16 b)
+void LZW::DictAddA(const std::string& str, LZWDictionary& dict, uint16& a, uint16& b)
 {
-    LZWDictionary updatedDict = dict;
-
     if (a >= 256)
     {
         a = 0;
@@ -59,20 +57,16 @@ LZWDictResult LZW::DictAddA(const std::string& str, const LZWDictionary& dict, u
         if (b >= 256)
         {
             b = 1;
-            updatedDict.clear();
+            dict.clear();
         }
     }
 
-    updatedDict[str] = CharToString(static_cast<char>(a)) + CharToString(static_cast<char>(b));
+    dict[str] = CharToString(static_cast<char>(a)) + CharToString(static_cast<char>(b));
     a += 1;
-
-    return std::make_tuple(updatedDict, a, b);
 }
 
-LZWDictResult LZW::DictAddB(const std::string& str, const LZWDictionary& dict, uint16 a, uint16 b)
+void LZW::DictAddB(const std::string& str, LZWDictionary& dict, uint16& a, uint16& b)
 {
-    LZWDictionary updatedDict = dict;
-
     if (a >= 256)
     {
         a = 0;
@@ -80,22 +74,20 @@ LZWDictResult LZW::DictAddB(const std::string& str, const LZWDictionary& dict, u
         if (b >= 256)
         {
             b = 1;
-            updatedDict.clear();
+            dict.clear();
         }
     }
 
-    updatedDict[CharToString(static_cast<char>(a)) + CharToString(static_cast<char>(b))] = str;
+    dict[CharToString(static_cast<char>(a)) + CharToString(static_cast<char>(b))] = str;
     a += 1;
-
-    return std::make_tuple(updatedDict, a, b);
 }
 
-std::string LZW::Compress(const std::string& input)
+LZWResult LZW::Compress(const std::string& input)
 {
     uint16 len = input.size();
     if (len <= 1)
     {
-        return "u" + input;
+        return {"u" + input, LZW_OK};
     }
 
     LZWDictionary dict;
@@ -118,7 +110,7 @@ std::string LZW::Compress(const std::string& input)
 
             if (write.empty())
             {
-                return "algorithm error, could not fetch word";
+                return {nullptr, LZW_ERR_EMPTY_DICT_RESULT};
             }
 
             result += write;
@@ -127,13 +119,10 @@ std::string LZW::Compress(const std::string& input)
 
             if (len <= resultLen)
             {
-                return "u" + input;
+                return {"u" + input, LZW_OK};
             }
 
-            LZWDictResult dictResult = DictAddA(wc, dict, a, b);
-            dict = std::get<0>(dictResult);
-            a = std::get<1>(dictResult);
-            b = std::get<2>(dictResult);
+            DictAddA(wc, dict, a, b);
             word = c;
         }
         else
@@ -149,34 +138,34 @@ std::string LZW::Compress(const std::string& input)
 
     if (len <= resultLen)
     {
-        return "u" + input;
+        return {"u" + input, LZW_OK};
     }
 
-    return result;
+    return {result, LZW_OK};
 }
 
-std::string LZW::Decompress(const std::string& input)
+LZWResult LZW::Decompress(const std::string& input)
 {
     if (input.empty())
     {
-        return "invalid input - not a compressed string";
+        return {nullptr, LZW_ERR_UNCOMPRESSED_STRING};
     }
 
     char control = input[0];
     if (control == 'u')
     {
-        return input.substr(1);
+        return {input.substr(1), LZW_OK};
     }
     else if (control != 'c')
     {
-        return "invalid input - not a compressed string";
+        return {nullptr, LZW_ERR_UNCOMPRESSED_STRING};
     }
 
     std::string data = input.substr(1);
     uint16 len = data.size();
     if (len < 2)
     {
-        return "invalid input - not a compressed string";
+        return {nullptr, LZW_ERR_UNCOMPRESSED_STRING};
     }
 
     LZWDictionary dict;
@@ -196,7 +185,7 @@ std::string LZW::Decompress(const std::string& input)
 
         if (lastStr.empty())
         {
-            return "could not find last from dict. Invalid input?";
+            return {nullptr, LZW_ERR_EMPTY_DICT_RESULT};
         }
 
         std::string toAdd = (basedictdecompress.find(code) != basedictdecompress.end()) ? basedictdecompress[code] : dict[code];
@@ -204,23 +193,17 @@ std::string LZW::Decompress(const std::string& input)
         if (!toAdd.empty())
         {
             result += toAdd;
-            LZWDictResult dictResult = DictAddB(lastStr + toAdd[0], dict, a, b);
-            dict = std::get<0>(dictResult);
-            a = std::get<1>(dictResult);
-            b = std::get<2>(dictResult);
+            DictAddB(lastStr + toAdd[0], dict, a, b);
         }
         else
         {
             std::string tmp = lastStr + lastStr[0];
             result += tmp;
-            LZWDictResult dictResult = DictAddB(tmp, dict, a, b);
-            dict = std::get<0>(dictResult);
-            a = std::get<1>(dictResult);
-            b = std::get<2>(dictResult);
+            DictAddB(tmp, dict, a, b);
         }
 
         last = code;
     }
 
-    return result;
+    return {result, LZW_OK};
 }

@@ -25,18 +25,24 @@
 #include <string>
 #include <map>
 
+enum LZWResultCode
+{
+    LZW_OK,
+    LZW_ERR_EMPTY_DICT_RESULT,
+    LZW_ERR_UNCOMPRESSED_STRING
+};
+
+typedef std::tuple<std::string, LZWResultCode> LZWResult;
 typedef std::map<std::string, std::string> LZWDictionary;
-typedef std::tuple<LZWDictionary, uint16, uint16> LZWDictResult; //std::tuple<std::map<std::string, std::string>, uint16, uint16>
 static LZWDictionary basedictcompress;
 static LZWDictionary basedictdecompress;
 static bool DictionariesInitialized = false;
 
-
 /**
  * TODO
- * - [ ] Error logging instead of returning error using tuple with error code and result if OK
  * - [ ] dict searches in own function?
- * - [ ] DictAdd: could change to void and change in variables without const and using & pointers
+ * - [ ] Adjust for WardenInjection
+ * - [ ] Add comment that size of string cannot exceed 65535
  */
 class LZW
 {
@@ -45,12 +51,12 @@ public:
 
     std::string CharToString(char c);
 
-    std::string Compress(const std::string& input);
-    std::string Decompress(const std::string& input);
+    LZWResult Compress(const std::string& input);
+    LZWResult Decompress(const std::string& input);
 
 protected:
-    LZWDictResult DictAddA(const std::string& str, const LZWDictionary& dict, uint16 a, uint16 b);
-    LZWDictResult DictAddB(const std::string& str, const LZWDictionary& dict, uint16 a, uint16 b);
+    void DictAddA(const std::string& str, LZWDictionary& dict, uint16& a, uint16& b);
+    void DictAddB(const std::string& str, LZWDictionary& dict, uint16& a, uint16& b);
 
 private:
     void InitializeDictionaries();

@@ -21,6 +21,7 @@
 #define _LZW_H_
 
 #include "Common.h"
+#include "Log.h"
 #include <iostream>
 #include <string>
 #include <map>
@@ -40,9 +41,7 @@ static bool DictionariesInitialized = false;
 
 /**
  * TODO
- * - [ ] dict searches in own function?
- * - [ ] Adjust for WardenInjection
- * - [ ] Add comment that size of string cannot exceed 65535
+ * - [ ] Add Logs
  */
 class LZW
 {
@@ -50,6 +49,8 @@ public:
     static LZW* instance();
 
     std::string CharToString(char c);
+    std::string GetWordFromDict(const std::string& word, const LZWDictionary& baseDict, const LZWDictionary& altDict);
+    uint16 GetNextValidPositionFrom(const uint16& i);
 
     LZWResult Compress(const std::string& input);
     LZWResult Decompress(const std::string& input);

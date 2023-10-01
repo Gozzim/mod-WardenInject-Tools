@@ -34,7 +34,33 @@ LZW* LZW::instance()
 
 std::string LZW::CharToString(char c)
 {
-    return std::string(1, c);
+    return {c};
+}
+
+std::string LZW::GetWordFromDict(const std::string& word, const LZWDictionary& baseDict, const LZWDictionary& altDict)
+{
+    if (baseDict.find(word) != baseDict.end())
+    {
+        return baseDict.at(word);
+    }
+    else if (altDict.find(word) != altDict.end())
+    {
+        return altDict.at(word);
+    }
+    else
+    {
+        return "";
+    }
+}
+
+uint16 LZW::GetNextValidPositionFrom(const uint16& i)
+{
+    if (i == 0 || i == 10 || i == 13)
+    {
+        return GetNextValidPositionFrom(i + 1);
+    }
+
+    return i;
 }
 
 void LZW::InitializeDictionaries()
@@ -42,7 +68,7 @@ void LZW::InitializeDictionaries()
     for (uint16 i = 0; i < 256; ++i)
     {
         std::string ic = CharToString(static_cast<char>(i));
-        std::string iic = CharToString(static_cast<char>(i)) + CharToString(static_cast<char>(0));
+        std::string iic = CharToString(static_cast<char>(i)) + CharToString(static_cast<char>(1));
         basedictcompress[ic] = iic;
         basedictdecompress[iic] = ic;
     }
@@ -52,34 +78,34 @@ void LZW::DictAddA(const std::string& str, LZWDictionary& dict, uint16& a, uint1
 {
     if (a >= 256)
     {
-        a = 0;
-        b += 1;
+        a = 1;
+        b = GetNextValidPositionFrom(b+1);
         if (b >= 256)
         {
-            b = 1;
+            b = 2;
             dict.clear();
         }
     }
 
     dict[str] = CharToString(static_cast<char>(a)) + CharToString(static_cast<char>(b));
-    a += 1;
+    a = GetNextValidPositionFrom(a+1);
 }
 
 void LZW::DictAddB(const std::string& str, LZWDictionary& dict, uint16& a, uint16& b)
 {
     if (a >= 256)
     {
-        a = 0;
-        b += 1;
+        a = 1;
+        b = GetNextValidPositionFrom(b+1);
         if (b >= 256)
         {
-            b = 1;
+            b = 2;
             dict.clear();
         }
     }
 
     dict[CharToString(static_cast<char>(a)) + CharToString(static_cast<char>(b))] = str;
-    a += 1;
+    a = GetNextValidPositionFrom(a+1);
 }
 
 LZWResult LZW::Compress(const std::string& input)
@@ -91,12 +117,11 @@ LZWResult LZW::Compress(const std::string& input)
     }
 
     LZWDictionary dict;
-    uint16 a = 0;
-    uint16 b = 1;
+    uint16 a = 1;
+    uint16 b = 2;
 
     std::string result = "c";
     uint16 resultLen = 1;
-    uint16 n = 2;
     std::string word = "";
 
     for (uint16 i = 0; i < len; ++i)
@@ -106,7 +131,7 @@ LZWResult LZW::Compress(const std::string& input)
 
         if (basedictcompress.find(wc) == basedictcompress.end() && dict.find(wc) == dict.end())
         {
-            std::string write = (basedictcompress.find(word) != basedictcompress.end()) ? basedictcompress[word] : dict[word];
+            std::string write = GetWordFromDict(word, basedictcompress, dict);
 
             if (write.empty())
             {
@@ -115,7 +140,6 @@ LZWResult LZW::Compress(const std::string& input)
 
             result += write;
             resultLen += write.size();
-            n += 1;
 
             if (len <= resultLen)
             {
@@ -131,10 +155,13 @@ LZWResult LZW::Compress(const std::string& input)
         }
     }
 
-    std::string finalWrite = (basedictcompress.find(word) != basedictcompress.end()) ? basedictcompress[word] : dict[word];
+    std::string finalWrite = GetWordFromDict(word, basedictcompress, dict);
+    if (finalWrite.empty()) {
+        return {nullptr, LZW_ERR_EMPTY_DICT_RESULT};
+    }
+
     result += finalWrite;
     resultLen += finalWrite.size();
-    n += 1;
 
     if (len <= resultLen)
     {
@@ -169,26 +196,24 @@ LZWResult LZW::Decompress(const std::string& input)
     }
 
     LZWDictionary dict;
-    uint16 a = 0;
-    uint16 b = 1;
+    uint16 a = 1;
+    uint16 b = 2;
     std::string result;
-    uint16 n = 0;
     std::string last = data.substr(0, 2);
 
-    result = (basedictdecompress.find(last) != basedictdecompress.end()) ? basedictdecompress[last] : dict[last];
-    n +=1;
+    result = GetWordFromDict(last, basedictdecompress, dict);
 
     for (uint16 i = 2; i < len; i += 2)
     {
         std::string code = data.substr(i, 2);
-        std::string lastStr = (basedictdecompress.find(last) != basedictdecompress.end()) ? basedictdecompress[last] : dict[last];
+        std::string lastStr = GetWordFromDict(last, basedictdecompress, dict);
 
         if (lastStr.empty())
         {
             return {nullptr, LZW_ERR_EMPTY_DICT_RESULT};
         }
 
-        std::string toAdd = (basedictdecompress.find(code) != basedictdecompress.end()) ? basedictdecompress[code] : dict[code];
+        std::string toAdd = GetWordFromDict(code, basedictdecompress, dict);
 
         if (!toAdd.empty())
         {

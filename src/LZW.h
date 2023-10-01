@@ -29,8 +29,9 @@
 enum LZWResultCode
 {
     LZW_OK,
-    LZW_ERR_EMPTY_DICT_RESULT,
-    LZW_ERR_UNCOMPRESSED_STRING
+    LZW_WARN_UNCOMPRESSED_STRING,
+    LZW_WARN_EMPTY_INPUT,
+    LZW_ERR_EMPTY_DICT_RESULT
 };
 
 typedef std::tuple<std::string, LZWResultCode> LZWResult;
@@ -39,10 +40,6 @@ static LZWDictionary basedictcompress;
 static LZWDictionary basedictdecompress;
 static bool DictionariesInitialized = false;
 
-/**
- * TODO
- * - [ ] Add Logs
- */
 class LZW
 {
 public:

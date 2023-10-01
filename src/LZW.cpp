@@ -113,6 +113,7 @@ LZWResult LZW::Compress(const std::string& input)
     uint16 len = input.size();
     if (len <= 1)
     {
+        LOG_DEBUG("module", "LZW::Compress: Compressing input {} with size {} <= 1.", input, len);
         return {"u" + input, LZW_OK};
     }
 
@@ -135,6 +136,7 @@ LZWResult LZW::Compress(const std::string& input)
 
             if (write.empty())
             {
+                LOG_ERROR("module", "LZW::Compress: Could not find word {} in dictionary at input index {}", word, i);
                 return {nullptr, LZW_ERR_EMPTY_DICT_RESULT};
             }
 
@@ -143,6 +145,7 @@ LZWResult LZW::Compress(const std::string& input)
 
             if (len <= resultLen)
             {
+                LOG_DEBUG("module", "LZW::Compress: Length of input is smaller than compressed result. Returning uncompressed.");
                 return {"u" + input, LZW_OK};
             }
 
@@ -156,7 +159,9 @@ LZWResult LZW::Compress(const std::string& input)
     }
 
     std::string finalWrite = GetWordFromDict(word, basedictcompress, dict);
-    if (finalWrite.empty()) {
+    if (finalWrite.empty())
+    {
+        LOG_ERROR("module", "LZW::Compress: Could not find word {} in dictionary after looping input.", finalWrite);
         return {nullptr, LZW_ERR_EMPTY_DICT_RESULT};
     }
 
@@ -165,6 +170,7 @@ LZWResult LZW::Compress(const std::string& input)
 
     if (len <= resultLen)
     {
+        LOG_DEBUG("module", "LZW::Compress: Total length of input is smaller than compressed result. Returning uncompressed.");
         return {"u" + input, LZW_OK};
     }
 
@@ -175,7 +181,8 @@ LZWResult LZW::Decompress(const std::string& input)
 {
     if (input.empty())
     {
-        return {nullptr, LZW_ERR_UNCOMPRESSED_STRING};
+        LOG_WARN("module", "LZW::Decompress: Tried to decompress empty input");
+        return {input, LZW_WARN_EMPTY_INPUT};
     }
 
     char control = input[0];
@@ -185,14 +192,16 @@ LZWResult LZW::Decompress(const std::string& input)
     }
     else if (control != 'c')
     {
-        return {nullptr, LZW_ERR_UNCOMPRESSED_STRING};
+        LOG_WARN("module", "LZW::Decompress: Tried to decompress empty input. Returning Input.");
+        return {input, LZW_WARN_UNCOMPRESSED_STRING};
     }
 
     std::string data = input.substr(1);
     uint16 len = data.size();
-    if (len < 2)
+    if (len <= 1)
     {
-        return {nullptr, LZW_ERR_UNCOMPRESSED_STRING};
+        LOG_WARN("module", "LZW::Decompress: Tried to decompress input {} with size {} <= 1. Returning input.", input, len);
+        return {input, LZW_WARN_UNCOMPRESSED_STRING};
     }
 
     LZWDictionary dict;
@@ -210,6 +219,7 @@ LZWResult LZW::Decompress(const std::string& input)
 
         if (lastStr.empty())
         {
+            LOG_ERROR("module", "LZW::Decompress: Could not find word {} in dictionary at input index {}", last, i);
             return {nullptr, LZW_ERR_EMPTY_DICT_RESULT};
         }
 

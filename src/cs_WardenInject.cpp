@@ -1,5 +1,6 @@
 /*
- * This file is part of the AzerothCore Project. See AUTHORS file for Copyright information
+ * This file was written for the AzerothCore Project.
+ * Code and Implementation: Gozzim (https://github.com/Gozzim/mod-WardenInject-Tools)
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Affero General Public License as published by the
@@ -215,7 +216,7 @@ public:
         }
 
         std::filesystem::path filePath(std::string{ filePathStr });
-        std::string payload = sWardenInjectMgr->GetPayloadFromFile(filePath);
+        std::string payload = sWardenInjectFileMgr->GetPayloadFromFile(filePath);
         LOG_DEBUG("module", "WardenInjectCommands::HandleFileInjectCommand - Injecting payload '{}' into client of player {}.", sWardenInjectMgr->ReplaceCurlyBraces(payload), target->GetName());
         sWardenInjectMgr->SendLargePayload(target, "addonName", 1.0, true, false, payload);
 

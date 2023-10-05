@@ -1,4 +1,4 @@
-!.gitignore
+!.gitkeep
 
 #
 #Generic
@@ -8,7 +8,7 @@
 .mailmap
 *.orig
 *.rej
-*.*~
+*~
 .hg/
 *.kdev*
 .DS_Store
@@ -22,7 +22,7 @@ CMakeLists.txt.user
 *.LOCAL.*
 
 #
-# IDE & other softwares
+# IDE & other software
 #
 /.settings/
 /.externalToolBuilders/*
@@ -30,7 +30,10 @@ CMakeLists.txt.user
 nbproject/
 .sync.ffs_db
 *.kate-swp
-.idea/
+.browse.VC*
+.idea
+cmake-build-*/*
+coverage-report/
 
 #
 # Eclipse

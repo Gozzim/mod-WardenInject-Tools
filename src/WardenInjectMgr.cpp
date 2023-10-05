@@ -112,7 +112,7 @@ void WardenInjectMgr::SendLargePayload(Player* player, const std::string& addon,
 {
     std::string payloadData = data; //TODO: better solution?
     std::string compressedData;
-    // TODO: Test This
+
     if (comp == 1)
     {
         compressedData = std::get<0>(sLZW->Compress(payloadData));

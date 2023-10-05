@@ -31,9 +31,9 @@ Requires at least revision [azerothcore-wotlk@67bbeb7](https://github.com/azerot
 * [ ] Payload Management
   * [x] Injection to handle payloads
   * [x] Chunk large payloads into multiple packets
-  * [ ] Compression
+  * [x] Compression
     * [x] LZW Implementation
-    * [ ] Adjustment for WardenInjection
+    * [x] Adjustment for WardenInjection
   * [x] Payload Storage
 * [x] Event Handling
   * [x] OnLogin: Initialize Injection
